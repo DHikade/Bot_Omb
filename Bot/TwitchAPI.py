@@ -50,11 +50,11 @@ class TwitchAPI():
         return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick)
     
     def getKraken_Follows(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/follows") #Zeigt nur die ersten 25 an
+        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/follows")
     
     def getKraken_Follows_List(self):
         follow = []
-        json = self.getKraken_Follows() #try,catch für gateway error
+        json = self.getKraken_Follows()
         while len(json["follows"]) > 0:
             for i in range(len(json["follows"])):
                 follow.append(json["follows"][i]["user"]["name"])
@@ -63,7 +63,7 @@ class TwitchAPI():
     
     def getKraken_Follows_Notifications(self):
         follow = []
-        json = self.getKraken_Follows() #try,catch für gateway error
+        json = self.getKraken_Follows()
         while len(json["follows"]) > 0:
             for i in range(len(json["follows"])):
                 if json["follows"][i]["notifications"]:
@@ -81,11 +81,11 @@ class TwitchAPI():
         return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/editors") #Brauch Access Token
     
     def getKraken_Videos(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/videos") #Zeigt nur die ersten 10 an
+        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/videos")
     
     def getKraken_Videos_List(self):
         video = []
-        json = self.getKraken_Videos() #try,catch für gateway error
+        json = self.getKraken_Videos()
         while len(json["videos"]) > 0:
             for i in range(len(json["videos"])):
                 video.append(json["videos"][i]["url"])

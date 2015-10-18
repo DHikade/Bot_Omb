@@ -32,7 +32,6 @@ from Bet import Bet
 from Announcement import Announcement
 from Poll import Poll
 from irc import irc
-from TwitchAPI import TwitchAPI
 from Greetings import Greetings
 import eCommand
 import eSetting
@@ -40,6 +39,7 @@ import eUser
 import eAnnouncement
 import regex
 import config
+import datetime
 
 class Bot_Omb(threading.Thread):
     def __init__(self, chat_channel):
@@ -57,17 +57,15 @@ class Bot_Omb(threading.Thread):
                 announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
                 announcement_thread.setName(key[eAnnouncement.ident])
                 announcements.append(announcement_thread)
-            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : Bet(), "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : Poll(), "greetings" : Greetings(chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"))}
-            self.__chat_channel[chat_channel[i]]["greetings"].start()
+            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : Bet(), "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : Poll(), "greetings" : None}
+            if self.__string_to_bool(self.__get_element('greetings', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
+                self.__chat_channel[chat_channel[i]]["greetings"] = Greetings(chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]))
             for key in announcements:
                 key.start()
-            
-        
+
     def run(self):
-        print("Thread: {0} started".format(self.__chat_channel))#!!!
+        print("Thread: {0} started".format(self.__chat_channel))
         self.__whisper.whisper('bot_omb', 'Bot activated')
-        test = TwitchAPI("serdrad0x")
-        print("init test: "+str(test.getTMI_Chatters_Users()))
         while self.isAlive():
             response_channel = self.__channel.receive(1024)
             if response_channel == "PING :tmi.twitch.tv\r\n":
@@ -87,6 +85,7 @@ class Bot_Omb(threading.Thread):
                     self.__announcelist = self.__chat_channel[self.__channel_name]['announcelist']
                     self.__smm_submits = self.__chat_channel[self.__channel_name]['smm_submits']
                     self.__poll = self.__chat_channel[self.__channel_name]['poll']
+                    self.__greetings = self.__chat_channel[self.__channel_name]['greetings']
                 elif channel is None:
                     print("No channel was found!")
                     channel = "Twitch_channel"
@@ -101,8 +100,9 @@ class Bot_Omb(threading.Thread):
                 message = regex.REG_MSG.sub("", response_channel)
                 
                 if not regex.REG_LOGIN.match(message) and username != 'bot_omb':
-                    message = message[:len(message)-2] #!!!!!
-                    print(username + "@" + self.__channel_name + ": " + message)
+                    message = message[:len(message)-2]
+                    actual_time = "{:%d.%m.%Y %H:%M:%S}".format(datetime.datetime.now())
+                    print(actual_time + " - " +username + "@" + self.__channel_name + ": " + message)
                     self.__warning(username, message)
                     self.__command(username, message)
                     self.__help(username, message, int(self.__get_element('help', self.__settings)[eSetting.state]))
@@ -133,7 +133,7 @@ class Bot_Omb(threading.Thread):
                     self.__poll_result(username, message, int(self.__get_element('poll_result', self.__settings)[eSetting.state]))
                     time.sleep(config.RATE)
         print("Thread: {0} shutdown".format(self.__channel_name))
-        
+
     def __poll_start(self, username, message, privileges):
         if regex.REG_POLL.match(message):
             user = self.__get_element(username, self.__users)
@@ -150,7 +150,7 @@ class Bot_Omb(threading.Thread):
                 self.__channel.chat(poll_text)
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __poll_vote(self, username, message, privileges):
         if regex.REG_POLL_VOTE.match(message):
             user = self.__get_element(username, self.__users)
@@ -164,7 +164,7 @@ class Bot_Omb(threading.Thread):
                 self.__whisper.whisper(username, poll_text)
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __poll_result(self, username, message, privileges):
         if message == "!result":
             user = self.__get_element(username, self.__users)
@@ -176,7 +176,7 @@ class Bot_Omb(threading.Thread):
                 self.__channel.chat(self.__poll.result())
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __smm_level_submit(self, username, message, privileges):
         if regex.REG_SMM_SUBMIT.match(message):
             user = self.__get_element(username, self.__users)
@@ -194,7 +194,7 @@ class Bot_Omb(threading.Thread):
                     self.__whisper.whisper(username, "Your Super-Mario-Maker-Level-Code was successfully added to the list. Please be patient while waiting for your Level!")
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __smm_level_submit_other(self, username, message, privileges):
         if regex.REG_SMM_SUBMIT_OTHER.match(message):
             user = self.__get_element(username, self.__users)
@@ -213,7 +213,7 @@ class Bot_Omb(threading.Thread):
                     self.__channel.chat("{0} Super-Mario-Maker-Level-Code was successfully added to the list. Please be patient while waiting for your Level!".format(smm_user))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __smm_level_remove(self, username, message, privileges):
         if regex.REG_SMM_REMOVE.match(message):
             user = self.__get_element(username, self.__users)
@@ -230,7 +230,7 @@ class Bot_Omb(threading.Thread):
                     self.__channel.chat("No Level found with the id {0}".format(smm_user))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __smm_level_show(self, username, message, privileges):
         if message == "!levels":
             user = self.__get_element(username, self.__users)
@@ -242,7 +242,7 @@ class Bot_Omb(threading.Thread):
                 self.__channel.chat("Following Levels are on the list: "+str(self.__smm_submits))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __smm_level_next(self, username, message, privileges):
         if message == "!next":
             user = self.__get_element(username, self.__users)
@@ -258,7 +258,7 @@ class Bot_Omb(threading.Thread):
                     self.__channel.chat("Sorry, every Level on the List was played!")
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __setting_show(self, username, message, privileges):
         if message == "!settings":
             user = self.__get_element(username, self.__users)
@@ -270,7 +270,7 @@ class Bot_Omb(threading.Thread):
                 self.__whisper.whisper(username, "These are the channel settings and their states: "+str(self.__settings))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __announce_show(self, username, message, privileges):
         if message == "!announcements":
             user = self.__get_element(username, self.__users)
@@ -282,7 +282,7 @@ class Bot_Omb(threading.Thread):
                 self.__whisper.whisper(username, "These are the channel announcements and their settings: "+str(self.__announcelist))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __announce_remove(self, username, message, privileges):
         if regex.REG_ANNOUNCE_REMOVE.match(message):
             user = self.__get_element(username, self.__users)
@@ -307,7 +307,7 @@ class Bot_Omb(threading.Thread):
                 self.__save("announcements.csv", self.__announcelist)
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __announce_add(self, username, message, privileges):
         if re.match('!announce',message):
             user = self.__get_element(username, self.__users)
@@ -377,11 +377,11 @@ class Bot_Omb(threading.Thread):
                     self.__channel.chat("The announcement {0} was successfully added to the channel!".format(announce_id))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def part(self):
         self.__channel.part(self.__channel_name)
         print("The channel was successfully left!")
-    
+
     def __info(self, username, message, privileges):
         if message == "!info":
             user = self.__get_element(username, self.__users)
@@ -537,9 +537,16 @@ class Bot_Omb(threading.Thread):
                     if setting_state == "on" or setting_state == "off":
                         if setting_state == "on":
                             self.__update(setting_name, [None, True], self.__settings)
+                            if setting_name == "greetings" and self.__greetings is None:
+                                self.__greetings = Greetings(self.__channel_name, self.__channel, self.__load("channel/"+self.__channel_name+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__settings)[eSetting.state]))
+                                self.__chat_channel[self.__channel_name]['greetings'] = self.__greetings
                         elif setting_state == "off":
                             self.__update(setting_name, [None, False], self.__settings)
-                    elif setting_name != "warning_url" and setting_name != "warning_caps" and setting_name != "warning_long_text":
+                            if setting_name == "greetings" and self.__greetings is not None:
+                                self.__greetings.stop()
+                                self.__greetings = None
+                                self.__chat_channel[self.__channel_name]['greetings'] = self.__greetings
+                    elif setting_name != "warning_url" and setting_name != "warning_caps" and setting_name != "warning_long_text" and setting_name != "greetings":
                         if self.__isNumber(setting_state):
                             if int(setting_state) >= 0 and int(setting_state) <= 99:
                                 self.__update(setting_name, [None, int(setting_state)], self.__settings)
@@ -547,9 +554,11 @@ class Bot_Omb(threading.Thread):
                                 self.__channel.chat("The settings for {0} can only be in the range of 0 to 99".format(setting_name, setting_state))
                     self.__channel.chat("The settings for {0} was changed to {1}".format(setting_name, setting_state))
                     self.__save("settings.csv", self.__settings)
+                    self.__settings = self.__load("channel/"+self.__channel_name+"/settings.csv")
+                    self.__chat_channel[self.__channel_name]["settings"] = self.__settings
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-                
+
     def __isNumber(self, value):
         try:
             int(value)
@@ -593,7 +602,7 @@ class Bot_Omb(threading.Thread):
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
-    def __command_remove(self, username, message, privileges): ###!!!!!!
+    def __command_remove(self, username, message, privileges):
         if regex.REG_COMMAND_REMOVE.match(message):
             user = self.__get_element(username, self.__users)
             if user is not None:
@@ -611,7 +620,7 @@ class Bot_Omb(threading.Thread):
                     self.__channel.chat("The command {0} is not set and can not be removed!".format(com))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __command_add(self, username, message, privileges): ##!!!!!
         if regex.REG_COMMAND.match(message):
             user = self.__get_element(username, self.__users)
@@ -665,7 +674,7 @@ class Bot_Omb(threading.Thread):
                 self.__whisper.whisper(username, "These are the channel commands and their message: "+str(self.__commands))
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
-    
+
     def __stop(self):
         pass
 
@@ -681,7 +690,7 @@ class Bot_Omb(threading.Thread):
             entrys.append(line[:len(line)-1])
             loaded_lines.append(entrys)
         return loaded_lines
-    
+
     def __save(self, file_name, data):
         file_save = open("channel/"+self.__channel_name+"/"+file_name, 'w')
         for i in range(len(data)):
@@ -690,13 +699,13 @@ class Bot_Omb(threading.Thread):
                 output += str(data[i][j]) + ";"
             file_save.write(output[:len(output)-1]+"\n")
         file_save.close()
-    
+
     def __get_element(self, key, frm):
         for elem in frm:
             if key in elem:
                 return elem
         return None
-        
+
     def __warning_url(self, username, message):
         if regex.REG_URL_CHECK.match(message):
             setting = self.__get_element('warning_url', self.__settings)
@@ -717,7 +726,7 @@ class Bot_Omb(threading.Thread):
                         self.__update(username, [None, None, None, False, None, None, None], self.__users)
                         return False
         return False
-    
+
     def __warning_caps(self, username, message):
         if regex.REG_CAPS.match(message):
             setting = self.__get_element('warning_caps', self.__settings)
@@ -733,12 +742,12 @@ class Bot_Omb(threading.Thread):
                         self.__channel.timeout(username, 1)
                         return True
         return False
-    
+
     def __string_to_bool(self, message):
         if message == "True":
             return True
         return False
-    
+
     def __warning_long_text(self, username, message):
         if len(message) > 400:
             setting = self.__get_element('warning_long_text', self.__settings)
@@ -754,7 +763,7 @@ class Bot_Omb(threading.Thread):
                         self.__channel.timeout(username, 1)
                         return True
         return False
-    
+
     def __update(self, key, data, frm):
         for i in range(len(frm)):
             if key in frm[i]:
@@ -780,7 +789,7 @@ class Bot_Omb(threading.Thread):
         data[0] = key
         self.__users.append(data)
         return True
-    
+
     def __warning(self, username, message):
         if self.__warning_url(username, message) or self.__warning_caps(username, message) or self.__warning_long_text(username, message):
             user = self.__get_element(username, self.__users)
@@ -798,7 +807,7 @@ class Bot_Omb(threading.Thread):
             user_warnings_date = int(round(time.time()))
             self.__update(username, [None, None, None, None, user_warnings, user_warnings_date, None, None], self.__users)
             self.__save("users.csv", self.__users)
-            
+
     def __help(self, username, message, privileges):
         if message == '!help':
             self.__whisper.whisper(username, "What do you want to know? Just type !help <command> for more information.")

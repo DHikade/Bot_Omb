@@ -1,6 +1,8 @@
 warning_url;False
 warning_caps;False
-warning_long_text:False
+warning_long_text;False
+greetings;False
+greetings_interval;60
 help;0
 coins;0
 command_add;99

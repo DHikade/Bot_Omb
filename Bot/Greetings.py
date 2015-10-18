@@ -38,7 +38,9 @@ class Greetings(threading.Thread):
         self.__interval = interval
         self.__name = name
         self.__api = TwitchAPI(self.__name.replace("#",""))
-        
+        self.__isAlive = True
+        self.start()
+
     def __greet(self, users):
         usernames = ""
         for i in range(len(users)):
@@ -46,21 +48,22 @@ class Greetings(threading.Thread):
                 usernames += users[i]
             else:
                 usernames += ", " + users[i]
-            self.__greeted.append([users[i]])    
+            self.__greeted.append([users[i]])
         self.__save("greetings.csv", self.__greeted)
         self.__channel.chat("Hi to all new first time Viewers: {0} I hope you enjoy my Stream!".format(usernames))
-            
+
     def run(self):
-        while self.isAlive():
+        while self.__isAlive:
             time.sleep(self.__interval)
-            users = self.__api.getTMI_Chatters_Users()
-            greet = []
-            for i in range(len(users)):
-                for j in range(len(self.__greeted)):
-                    if users[i] not in self.__greeted[j]:
+            if self.__isAlive:
+                users = self.__api.getTMI_Chatters_Users()
+                greet = []
+                for i in range(len(users)):
+                    if [users[i]] not in self.__greeted:
                         greet.append(users[i])
-        print("Greetings Thread stopped working!")
-                    
+                if len(greet) > 0:
+                    self.__greet(greet)    
+
     def __save(self, file_name, data):
         file_save = open("channel/"+self.__name+"/"+file_name, 'w')
         for i in range(len(data)):
@@ -69,3 +72,9 @@ class Greetings(threading.Thread):
                 output += str(data[i][j]) + ";"
             file_save.write(output[:len(output)-1]+"\n")
         file_save.close()
+
+    def stop(self):
+        self.__isAlive = False
+
+    def isAlive(self):
+        return self.__isAlive

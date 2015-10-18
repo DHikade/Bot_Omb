@@ -113,6 +113,7 @@ class irc():
         return response
     
     def timeout(self, user, secs):
+        print("geht das?")
         self.chat(".timeout {0} {1}".format(user, secs))
         
     def ban(self, user):
