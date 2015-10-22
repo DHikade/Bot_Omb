@@ -57,7 +57,7 @@ class Bot_Omb(threading.Thread):
                 announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
                 announcement_thread.setName(key[eAnnouncement.ident])
                 announcements.append(announcement_thread)
-            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : Bet(), "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : Poll(), "greetings" : None}
+            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : Bet(), "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None}
             if self.__string_to_bool(self.__get_element('greetings', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
                 self.__chat_channel[chat_channel[i]]["greetings"] = Greetings(chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]))
             for key in announcements:
@@ -142,12 +142,16 @@ class Bot_Omb(threading.Thread):
             else:
                 user_privileges = 0
             if user_privileges >= privileges:
-                poll_name = message[message.find(" ")+1 : message.rfind("(")-1]
-                poll_options = message[message.find("(") : message.rfind(")")]
-                poll_minutes = message[message.rfind(" ")+1 : message.rfind(":")]
-                poll_seconds = message[message.rfind(":")+1 : len(message)]
-                poll_text = self.__poll.start(poll_name, poll_options, poll_minutes, poll_seconds)
-                self.__channel.chat(poll_text)
+                if self.__poll is None or not self.__poll.isActive():
+                    poll_name = message[message.find(" ")+1 : message.rfind("(")-1]
+                    poll_options = message[message.find("(") : message.rfind(")")]
+                    poll_minutes = message[message.rfind(" ")+1 : message.rfind(":")]
+                    poll_seconds = message[message.rfind(":")+1 : len(message)]
+                    self.__poll = Poll(self.__channel, poll_name, poll_options, poll_minutes, poll_seconds)
+                    self.__chat_channel[self.__channel_name]['poll'] = self.__poll
+                    self.__poll.start()
+                else:
+                    self.__whisper.whisper(username, "Poll is already in progress, please wait until this one is finished!")
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
@@ -159,9 +163,12 @@ class Bot_Omb(threading.Thread):
             else:
                 user_privileges = 0
             if user_privileges >= privileges:
-                poll_vote = message[message.find(" ")+1 : len(message)]
-                poll_text = self.__poll.vote(username, poll_vote)
-                self.__whisper.whisper(username, poll_text)
+                if self.__poll is not None and self.__poll.isActive():
+                    poll_vote = message[message.find(" ")+1 : len(message)]
+                    poll_text = self.__poll.vote(username, poll_vote)
+                    self.__whisper.whisper(username, poll_text)
+                else:
+                    self.__whisper.whisper(username, "No polls in progress right now!")
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
@@ -173,7 +180,13 @@ class Bot_Omb(threading.Thread):
             else:
                 user_privileges = 0
             if user_privileges >= privileges:
-                self.__channel.chat(self.__poll.result())
+                if self.__poll is not None:
+                    if not self.__poll.isActive():
+                        self.__poll.result()
+                    else:
+                        self.__channel.chat("Poll still in progress!")
+                else:
+                    self.__channel.chat("No polls so far!")
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 

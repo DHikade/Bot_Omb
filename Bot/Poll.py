@@ -25,55 +25,74 @@
 '''
 
 import time
+import threading
 
-class Poll():
-    def __init__(self):
+class Poll(threading.Thread):
+    def __init__(self, channel, poll_name, poll_options, minute, second):
+        threading.Thread.__init__(self)
+        self.__start(poll_options)
+        self.__poll_name = poll_name
+        self.__minute = minute
+        self.__second = second
+        self.__poll_user_list = {}
         self.__poll_allow = False
-        
-    def start(self, poll_name, poll_option, minute, second):
-        if not self.__poll_allow:
-            poll_option = poll_option[1 : len(poll_option)]
-            self.__poll_option = []
-            poll_text = ""
-            for i in range(poll_option.count('/')+1):
-                if "/" in poll_option:
-                    self.__poll_option.append({poll_option[0:poll_option.find("/")] : 0})
-                    poll_text += str(i)+". "+poll_option[0:poll_option.find("/")]
-                    poll_option = poll_option[poll_option.find("/")+1 : len(poll_option)]
-                else:
-                    self.__poll_option.append({poll_option[0:len(poll_option)]: 0})
-                    poll_text += str(i)+". "+poll_option[0:len(poll_option)]
-                    poll_option = poll_option[0:len(poll_option)]
-            self.__poll_name = poll_name
-            self.__minute = minute
-            self.__second = second
-            self.__poll_time_start = int(round(time.time()))
-            self.__poll_allow = True
-            self.__poll_user_list = {}
-            return "The Poll "+ poll_name +" started: "+poll_text
-        else:
-            return "Poll is already in progress, please wait " + str(int(round(time.time())) - self.__poll_time_start) + "more seconds to start a new one!"
-        
+        self.__channel = channel
+        self.__win_message = ""
+
+    def run(self):
+        self.__poll_allow = True
+        self.__channel.chat("The Poll "+ self.__poll_name +" started: "+ self.__poll_text)
+        time.sleep(int(self.__minute)*60 + int(self.__second))
+        self.__poll_allow = False
+        self.__channel.chat("The Poll "+ self.__poll_name +" is finished!")
+        self.__result()
+
+    def __start(self, poll_options):
+        poll_options = poll_options[1 : len(poll_options)]
+        poll_options_list = []
+        poll_text = ""
+        for i in range(poll_options.count('/')+1):
+            if "/" in poll_options:
+                poll_options_list.append({poll_options[0:poll_options.find("/")] : 0})
+                poll_text += str(i)+". "+poll_options[0:poll_options.find("/")]
+                poll_options = poll_options[poll_options.find("/")+1 : len(poll_options)]
+            else:
+                poll_options_list.append({poll_options[0:len(poll_options)]: 0})
+                poll_text += str(i)+". "+poll_options[0:len(poll_options)]
+                poll_options = poll_options[0:len(poll_options)]
+        self.__poll_text = poll_text
+        self.__poll_option = poll_options_list
+
     def vote(self, username, poll_vote):
-        if self.__poll_allow and (int(round(time.time())) - self.__poll_time_start) < (int(self.__minute)*60 + int(self.__second)):
+        if self.__poll_allow:
             if int(poll_vote) < len(self.__poll_option):
                 self.__poll_user_list[username] = int(poll_vote)
                 return "Your vote was successfully adopted!"
             else:
                 return "You voted for a option which is actually not on the list."
         else:
-            self.__poll_allow = False
             return "No polls in progress right now!"
 
-    def result(self):
+    def isActive(self):
+        return self.__poll_allow
+
+    def __result(self):
         for user in self.__poll_user_list:
             for vote in self.__poll_option[self.__poll_user_list[user]]:
                 self.__poll_option[self.__poll_user_list[user]][vote] += 1
-        poll_win = -1
+        poll_win = 0
         poll_win_vote = ""
+        poll_win_i = -1
         for i in range(len(self.__poll_option)):
             for vote in self.__poll_option[i]:
                 if self.__poll_option[i][vote] > poll_win:
                     poll_win_vote = vote
                     poll_win_i = i
-        return "Winner of the poll {0} is {1} with {2} votes!".format(self.__poll_name, poll_win_vote, self.__poll_option[poll_win_i][poll_win_vote])
+        if poll_win_i >= 0:
+            self.__win_message = "Winner of the poll {0} is {1} with {2} votes!".format(self.__poll_name, poll_win_vote, self.__poll_option[poll_win_i][poll_win_vote])
+        else:
+            self.__win_message = "No one voted for this poll!"
+        self.__channel.chat(self.__win_message)
+
+    def result(self):
+        self.__channel.chat(self.__win_message)
