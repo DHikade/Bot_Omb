@@ -82,7 +82,7 @@ def follow(username, message, privileges):
         if user_privileges >= privileges:
             if not has(main_channel_list, "#"+username):
                 try:
-                    os.mkdir("channel/"+"#"+username)
+                    os.mkdir(config.PATH+"channel/"+"#"+username)
                     commands_file = open(config.PATH+"channel/"+"#"+username+"/"+"commands.csv", "w")
                     commands_file.write("")
                     commands_file.close()
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     main_settings = load("channel/"+main_name+"/settings.csv")
     main_commands = load("channel/"+main_name+"/commands.csv")
     main_channel_list = load("channel/channel.csv")
-    with open("channel/channel.csv", 'r') as loaded:
+    with open(config.PATH+"channel/channel.csv", 'r') as loaded:
         lines = loaded.readlines()
     bot_threads = []
     for i in range(len(lines)):
