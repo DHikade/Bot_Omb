@@ -26,6 +26,7 @@
 
 import re
 import time
+
 import threading
 
 from Bet import Bet
@@ -39,7 +40,6 @@ import eUser
 import eAnnouncement
 import regex
 import config
-import datetime
 
 class Bot_Omb(threading.Thread):
     def __init__(self, chat_channel):
@@ -101,7 +101,7 @@ class Bot_Omb(threading.Thread):
                 
                 if not regex.REG_LOGIN.match(message) and username != 'bot_omb':
                     message = message[:len(message)-2]
-                    actual_time = "{:%d.%m.%Y %H:%M:%S}".format(datetime.datetime.now())
+                    actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
                     print(actual_time + " - " +username + "@" + self.__channel_name + ": " + message)
                     self.__warning(username, message)
                     self.__command(username, message)
@@ -379,7 +379,7 @@ class Bot_Omb(threading.Thread):
                                     self.__save("announcements.csv", self.__announcelist)
                                     break
                         else:
-                            print("Hier dürfte aber eigentlich nichts falsch sein?")
+                            print("There should no problem here?")
                     else:
                         announce_announcement = Announcement(announce_id, announce_msg, self.__channel, announce_hour, announce_min, announce_sec)
                         announce_announcement.setName(announce_id)
@@ -634,7 +634,7 @@ class Bot_Omb(threading.Thread):
             else:
                 self.__whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
-    def __command_add(self, username, message, privileges): ##!!!!!
+    def __command_add(self, username, message, privileges):
         if regex.REG_COMMAND.match(message):
             user = self.__get_element(username, self.__users)
             if user is not None:
@@ -692,7 +692,7 @@ class Bot_Omb(threading.Thread):
         pass
 
     def __load(self, file_name):
-        with open(file_name, 'r') as loaded:
+        with open(config.PATH+file_name, 'r') as loaded:
             lines = loaded.readlines()
         loaded_lines = []
         for line in lines:
@@ -705,7 +705,7 @@ class Bot_Omb(threading.Thread):
         return loaded_lines
 
     def __save(self, file_name, data):
-        file_save = open("channel/"+self.__channel_name+"/"+file_name, 'w')
+        file_save = open(config.PATH+"channel/"+self.__channel_name+"/"+file_name, 'w')
         for i in range(len(data)):
             output = ''
             for j in range(len(data[i])):
@@ -852,3 +852,13 @@ class Bot_Omb(threading.Thread):
                 self.__whisper.whisper(username, "If you want, the bot can follow you to your chat and help to moderate everything. For further information take a look at the Bot_Omb channel.")
             elif help_command == "unfollow":
                 self.__whisper.whisper(username, "If you use the Bot_Omb in your chat and don't want it anymore, you can remove it with !unfollow. For further information take a look at the Bot_Omb channel.")
+            elif help_command == "greetings":
+                self.__whisper.whisper(username, "Every x seconds the bot will check for new users in your channel and look up if they were already greeted. To change this behaviour use !setting greetings on/of and !setting greetings_interval 60")
+            elif help_command == "poll":
+                self.__whisper.whisper(username, "If you type !poll pollname (optionA / optionB) mm:ss you can start a new poll which will accept votes until time ends. !result shows you the results and !vote num is for voting!")
+            elif help_command == "next":
+                self.__whisper.whisper(username, "Announces the next Level of the Super Mario Maker - Level - List.")
+            elif help_command == "levels":
+                self.__whisper.whisper(username, "Shows all level which are added to the Super Mario Maker - Level - List.")
+            elif help_command == "submit":
+                self.__whisper.whisper(username, "Add a level to the Super Mario Maker - Level - List. You can add a foreign level by typing !submit username levelcode.")

@@ -45,7 +45,7 @@ def get_element(key, frm):
     return None
 
 def save(file_name, data):
-    file_save = open("channel/"+file_name, 'w')
+    file_save = open(config.PATH+"channel/"+file_name, 'w')
     for i in range(len(data)):
         output = ''
         for j in range(len(data[i])):
@@ -54,7 +54,7 @@ def save(file_name, data):
     file_save.close()
 
 def load(file_name):
-    with open(file_name, 'r') as loaded:
+    with open(config.PATH+file_name, 'r') as loaded:
         lines = loaded.readlines()
     loaded_lines = []
     for line in lines:
@@ -83,24 +83,24 @@ def follow(username, message, privileges):
             if not has(main_channel_list, "#"+username):
                 try:
                     os.mkdir("channel/"+"#"+username)
-                    commands_file = open("channel/"+"#"+username+"/"+"commands.csv", "w")
+                    commands_file = open(config.PATH+"channel/"+"#"+username+"/"+"commands.csv", "w")
                     commands_file.write("")
                     commands_file.close()
-                    announce_file = open("channel/"+"#"+username+"/"+"announcements.csv", "w")
+                    announce_file = open(config.PATH+"channel/"+"#"+username+"/"+"announcements.csv", "w")
                     announce_file.write("")
                     announce_file.close()
-                    greetings_file = open("channel/"+"#"+username+"/"+"greetings.csv", "w")
+                    greetings_file = open(config.PATH+"channel/"+"#"+username+"/"+"greetings.csv", "w")
                     greetings_file.write("")
                     greetings_file.close()
-                    settings_file = open("channel/"+"#"+username+"/"+"settings.csv", "w")
+                    settings_file = open(config.PATH+"channel/"+"#"+username+"/"+"settings.csv", "w")
                     settings_file.write("warning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\n")
                     settings_file.close()
-                    users_file = open("channel/"+"#"+username+"/"+"users.csv", "w")
+                    users_file = open(config.PATH+"channel/"+"#"+username+"/"+"users.csv", "w")
                     users_file.write(username+";100;100;False;0;0;0\n")
                     users_file.close()
                     main_channel_list.append(["#"+username])
                     save("channel.csv", main_channel_list)
-                    channel_file = open("channel/"+"channel.csv", "w")
+                    channel_file = open(config.PATH+"channel/"+"channel.csv", "w")
                     for i in range(len(main_channel_list)):
                         channel_file.write(main_channel_list[i][0]+"\n")
                     channel_file.close()
@@ -126,7 +126,7 @@ def unfollow(username, message, privileges):
         if user_privileges >= privileges:
             if has(main_channel_list, "#"+username):
                 try:
-                    shutil.rmtree("channel/#"+username)
+                    shutil.rmtree(config.PATH+"channel/#"+username)
                     for key in main_channel_list:
                         if key[0] == "#"+username:
                             main_channel_list.remove(key)
