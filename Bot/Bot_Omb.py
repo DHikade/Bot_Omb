@@ -63,6 +63,18 @@ class Bot_Omb(threading.Thread):
             for key in announcements:
                 key.start()
 
+    def get_Channel(self):
+        return self.__chat_channel
+
+    def get_Greetings(self):
+        return self.__greetings
+
+    def get_Poll(self):
+        return self.__poll
+
+    def get_Announcements(self):
+        return self.__announcements
+
     def run(self):
         print("Thread: {0} started".format(self.__chat_channel))
         self.__whisper.whisper('bot_omb', 'Bot activated')
@@ -102,7 +114,7 @@ class Bot_Omb(threading.Thread):
                 if not regex.REG_LOGIN.match(message) and username != 'bot_omb':
                     message = message[:len(message)-2]
                     actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
-                    print(actual_time + " - " +username + "@" + self.__channel_name + ": " + message)
+                    print(actual_time + " - " + username + "@" + self.__channel_name + ": " + message)
                     self.__warning(username, message)
                     self.__command(username, message)
                     self.__help(username, message, int(self.__get_element('help', self.__settings)[eSetting.state]))
@@ -556,7 +568,10 @@ class Bot_Omb(threading.Thread):
                         elif setting_state == "off":
                             self.__update(setting_name, [None, False], self.__settings)
                             if setting_name == "greetings" and self.__greetings is not None:
-                                self.__greetings.stop()
+                                if hasattr(self.__greetings, "_tstate_lock"):
+                                    if hasattr(self.__greetings._tstate_lock, "release"):
+                                        self.__greetings._tstate_lock.release()
+                                self.__greetings._stop()
                                 self.__greetings = None
                                 self.__chat_channel[self.__channel_name]['greetings'] = self.__greetings
                     elif setting_name != "warning_url" and setting_name != "warning_caps" and setting_name != "warning_long_text" and setting_name != "greetings":

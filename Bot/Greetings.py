@@ -28,6 +28,7 @@ import time
 import threading
 
 from TwitchAPI import TwitchAPI
+import config
 
 class Greetings(threading.Thread):
 
@@ -38,7 +39,7 @@ class Greetings(threading.Thread):
         self.__interval = interval
         self.__name = name
         self.__api = TwitchAPI(self.__name.replace("#",""))
-        self.__isAlive = True
+        #self.__isAlive = True
         self.start()
 
     def __greet(self, users):
@@ -53,9 +54,9 @@ class Greetings(threading.Thread):
         self.__channel.chat("Hi to all new first time Viewers: {0} I hope you enjoy my Stream!".format(usernames))
 
     def run(self):
-        while self.__isAlive:
+        while self.isAlive():
             time.sleep(self.__interval)
-            if self.__isAlive:
+            if self.isAlive():
                 users = self.__api.getTMI_Chatters_Users()
                 greet = []
                 for i in range(len(users)):
@@ -65,7 +66,7 @@ class Greetings(threading.Thread):
                     self.__greet(greet)    
 
     def __save(self, file_name, data):
-        file_save = open("channel/"+self.__name+"/"+file_name, 'w')
+        file_save = open(config.PATH+"channel/"+self.__name+"/"+file_name, 'w')
         for i in range(len(data)):
             output = ''
             for j in range(len(data[i])):
@@ -73,8 +74,8 @@ class Greetings(threading.Thread):
             file_save.write(output[:len(output)-1]+"\n")
         file_save.close()
 
-    def stop(self):
-        self.__isAlive = False
+    #def stop(self):
+    #    self.__isAlive = False
 
-    def isAlive(self):
-        return self.__isAlive
+    #def isAlive(self):
+    #    return self.__isAlive

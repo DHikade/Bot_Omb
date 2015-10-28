@@ -33,6 +33,7 @@ import config
 import os
 import shutil
 import re
+import time
 
 def show(elements):
     for i in range(len(elements)):
@@ -71,6 +72,26 @@ def has(arr, element):
         if key[0] == element:
             return True
     return False
+
+def release(value):
+    if hasattr(value, "_tstate_lock"):
+        if hasattr(value._tstate_lock, "release"):
+            value._tstate_lock.release()
+
+def shutdown(bot_thread):
+    bot_thread.part()
+    for j in bot_thread.get_Channel():
+        if bot_thread.get_Channel()[j]['greetings'] is not None:
+            release(bot_thread.get_Channel()[j]['greetings'])
+            bot_thread.get_Channel()[j]['greetings']._stop()
+        if bot_thread.get_Channel()[j]['poll'] is not None:
+            release(bot_thread.get_Channel()[j]['poll'])
+            bot_thread.get_Channel()[j]['poll']._stop()
+        for announcement in bot_thread.get_Channel()[j]['announcements']:
+            release(announcement)
+            announcement._stop()
+    release(bot_thread)
+    bot_thread._stop()
 
 def follow(username, message, privileges):
     if message == "!follow":
@@ -138,8 +159,7 @@ def unfollow(username, message, privileges):
                 for i in range(len(bot_threads)):
                     if "#"+username == bot_threads[i].getName():
                         bot_threads[i].part()
-                        if hasattr(bot_threads[i], "_tstate_lock"):
-                            bot_threads[i]._tstate_lock.release()
+                        release(bot_threads[i])
                         bot_threads[i]._stop()
                         del bot_threads[i]
                         break
@@ -159,13 +179,46 @@ def restart(username, message, privileges):
         if user_privileges >= privileges:
             for i in range(len(bot_threads)):
                 if "#"+username == bot_threads[i].getName():
-                    if not bot_threads[i].isAlive():
-                        bot_threads[i].start()
-                        main_whisper.whisper(username, "The Bot was restarted. Bot_Omb should be in your Stream again!")
-                    else:
-                        main_whisper.whisper(username, "The Bot is still alive. You can not restart it right now!")
+                    shutdown(bot_threads[i])
+                    del bot_threads[i]
+                    bot_thread = Bot_Omb(["#"+username])
+                    bot_thread.setName("#"+username)
+                    bot_threads.append(bot_thread)
+                    bot_thread.start()
+                    main_whisper.whisper(username, "The Bot was restarted. Bot_Omb should be in your Stream again!")
                 else:
                     main_whisper.whisper(user, "The Bot can not be restarted, because Bet_Omb is not following your Stream!")
+        else:
+            main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
+
+def restart_all(username, message, privileges):
+    if message == "!restart all":
+        user = get_element(username, main_users)
+        if user is not None:
+            user_privileges = int(user[eUser.privileges])
+        else:
+            user_privileges = 0
+        if user_privileges >= privileges:
+            for i in range(len(bot_threads)):
+                shutdown(bot_threads[i])
+                bot_thread = Bot_Omb([bot_threads[i].getName()])
+                bot_thread.setName(bot_threads[i].getName())
+                bot_threads[i] = bot_thread
+                bot_thread.start()
+        else:
+            main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
+
+def shutdown_all(username, message, privileges):
+    if message == "!shutdown":
+        user = get_element(username, main_users)
+        if user is not None:
+            user_privileges = int(user[eUser.privileges])
+        else:
+            user_privileges = 0
+        if user_privileges >= privileges:
+            for i in range(len(bot_threads)):
+                shutdown(bot_threads[i])
+            main_whisper.whisper(username, "Every channel is shutdown!")
         else:
             main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
@@ -213,8 +266,11 @@ if __name__ == '__main__':
             message = regex.REG_MSG.sub("", response_channel)
             if not regex.REG_LOGIN.match(message) and username != 'bot_omb':
                 message = message[:len(message)-2]
-                print(username + "@" + main_name + ": " + message)
+                actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
+                print(actual_time + " - " + username + "@" + main_name + ": " + message)
                 follow(username, message, 0)
                 unfollow(username, message, 0)
                 restart(username, message, 0)
+                restart_all(username, message, 99)
                 show_threads(username, message, 99)
+                shutdown_all(username, message, 99)
