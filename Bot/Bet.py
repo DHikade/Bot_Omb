@@ -28,7 +28,8 @@ import sys
 import time
 
 class Bet(object):
-    def __init__(self):
+    def __init__(self, language):
+        self.__language = language.get_Languages()
         self.__bet_time_start = 0
         self.__bet_allow = False
         self.__bets = {}
@@ -37,6 +38,8 @@ class Bet(object):
         if not self.__bet_allow:
             self.__bet_time_start = int(round(time.time()))
             self.__bet_allow = True
+            return True
+        return False
     
     def stop(self):
         if self.__bet_allow:
@@ -61,9 +64,10 @@ class Bet(object):
                 win_money += self.__bets[win_user]['bet_spent']
                 self.__bets[win_user]['bet_money'] += win_money
                 self.__bet_time_start = 0
-                return "The winner is {0}, with a predicted time of {1}:{2}:{3}. You have earned {4} coins.".format(win_user, str(self.__bets[win_user]['bet_hour']), str(self.__bets[win_user]['bet_min']), str(self.__bets[win_user]['bet_sec']), str(win_money))
+                return {"bool" : True, "msg" : self.__language["bet_stop"].format(win_user, str(self.__bets[win_user]['bet_hour']), str(self.__bets[win_user]['bet_min']), str(self.__bets[win_user]['bet_sec']), str(win_money))}
             else:
-                return "Sadly no one bet."
+                return {"bool" : False, "msg" : self.__language["bet_stop_no"]}
+        return {"bool" : False, "msg" : self.__language["bet_not_active"]}
     
     def get_bets(self):
         return self.__bets
@@ -72,9 +76,13 @@ class Bet(object):
         if self.__bet_allow:
             self.__bet_allow = False
             self.__bets = []
+            return True
+        return False
     
     def bet(self, username, bet_money, bet_spent ,bet_hour, bet_min, bet_sec):
         if self.__bet_allow and (int(round(time.time())) - self.__bet_time_start) < 180:
             if bet_money >= bet_spent:
                 bet_money -= bet_spent
                 self.__bets[username] = {'bet_money' : bet_money, 'bet_spent' : bet_spent, 'bet_time' : bet_hour*60*60 + bet_min*60 + bet_sec,'bet_hour' : bet_hour, 'bet_min' : bet_min, 'bet_sec' : bet_sec}
+                return True
+        return False

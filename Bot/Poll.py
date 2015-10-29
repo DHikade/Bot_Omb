@@ -28,7 +28,8 @@ import time
 import threading
 
 class Poll(threading.Thread):
-    def __init__(self, channel, poll_name, poll_options, minute, second):
+    def __init__(self, language, channel, poll_name, poll_options, minute, second):
+        self.__language = language.get_Languages()
         threading.Thread.__init__(self)
         self.__start(poll_options)
         self.__poll_name = poll_name
@@ -41,10 +42,10 @@ class Poll(threading.Thread):
 
     def run(self):
         self.__poll_allow = True
-        self.__channel.chat("The Poll "+ self.__poll_name +" started: "+ self.__poll_text)
+        self.__channel.chat(self.__language["poll_start"].format(self.__poll_name, self.__poll_text))
         time.sleep(int(self.__minute)*60 + int(self.__second))
         self.__poll_allow = False
-        self.__channel.chat("The Poll "+ self.__poll_name +" is finished!")
+        self.__channel.chat(self.__language["poll_finish"].format(self.__poll_name))
         self.__result()
 
     def __start(self, poll_options):
@@ -67,11 +68,11 @@ class Poll(threading.Thread):
         if self.__poll_allow:
             if int(poll_vote) < len(self.__poll_option):
                 self.__poll_user_list[username] = int(poll_vote)
-                return "Your vote was successfully adopted!"
+                return self.__language["poll_vote"]
             else:
-                return "You voted for a option which is actually not on the list."
+                return self.__language["poll_vote_fail"]
         else:
-            return "No polls in progress right now!"
+            return self.__language["poll_progress_off"]
 
     def isActive(self):
         return self.__poll_allow
@@ -89,9 +90,9 @@ class Poll(threading.Thread):
                     poll_win_vote = vote
                     poll_win_i = i
         if poll_win_i >= 0:
-            self.__win_message = "Winner of the poll {0} is {1} with {2} votes!".format(self.__poll_name, poll_win_vote, self.__poll_option[poll_win_i][poll_win_vote])
+            self.__win_message = self.__language["poll_vote_win"].format(self.__poll_name, poll_win_vote, self.__poll_option[poll_win_i][poll_win_vote])
         else:
-            self.__win_message = "No one voted for this poll!"
+            self.__win_message = self.__language["poll_vote_not"]
         self.__channel.chat(self.__win_message)
 
     def result(self):

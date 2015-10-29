@@ -32,14 +32,14 @@ import config
 
 class Greetings(threading.Thread):
 
-    def __init__(self, name, channel, greeted, interval = 60):
+    def __init__(self, language, name, channel, greeted, interval = 60):
+        self.__language = language.get_Languages()
         threading.Thread.__init__(self)
         self.__greeted = greeted
         self.__channel = channel
         self.__interval = interval
         self.__name = name
         self.__api = TwitchAPI(self.__name.replace("#",""))
-        #self.__isAlive = True
         self.start()
 
     def __greet(self, users):
@@ -51,7 +51,7 @@ class Greetings(threading.Thread):
                 usernames += ", " + users[i]
             self.__greeted.append([users[i]])
         self.__save("greetings.csv", self.__greeted)
-        self.__channel.chat("Hi to all new first time Viewers: {0} I hope you enjoy my Stream!".format(usernames))
+        self.__channel.chat(self.__language["greetings"].format(usernames))
 
     def run(self):
         while self.isAlive():
@@ -73,9 +73,3 @@ class Greetings(threading.Thread):
                 output += str(data[i][j]) + ";"
             file_save.write(output[:len(output)-1]+"\n")
         file_save.close()
-
-    #def stop(self):
-    #    self.__isAlive = False
-
-    #def isAlive(self):
-    #    return self.__isAlive
