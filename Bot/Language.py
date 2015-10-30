@@ -47,6 +47,7 @@ class Language(object):
             self.__languages = {
                 "language_switch" : "The language was changed to {0}",
                 "language_switch_fail" : "Language could not be changed because {0} was not found!",
+                "language_later" : "A module is in progress! The language for the module will be changed after it is finished.",
                 "privileges_check_fail" : "Your privileges level is not high enough to perform this command! You need at least a level of {0}.",
                 "poll_progress_on" : "Poll is already in progress, please wait until this one is finished!",
                 "poll_progress_off" : "No polls in progress right now!",
@@ -127,6 +128,7 @@ class Language(object):
             self.__languages = {
                 "language_switch" : "Die Sprache wurde geändert zu {0}",
                 "language_switch_fail" : "Die Sprache konnte nicht geändert werden da {0} nicht gefunden wurde!",
+                "language_later" : "Ein Modul läuft gerade! Die Sprache dieses Moduls wird geändert, sobald es fertig ist.",
                 "privileges_check_fail" : "Dein Berechtigungslevel ist nicht hoch genug um das Kommando auszuführen! Du brauchst mindestens ein Berechtigungslevel von {0}.",
                 "poll_progress_on" : "Eine Umfrage ist bereits im Gange, bitte warte bis diese vorbei ist!",
                 "poll_progress_off" : "Aktuell gibt es keine Umfrage!",

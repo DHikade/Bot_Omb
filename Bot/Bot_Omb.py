@@ -136,6 +136,9 @@ class Bot_Omb(threading.Thread):
                     self.__language(username, message, int(self.__get_element('language', self.__settings)[eSetting.state]))
                     time.sleep(config.RATE)
         print("Thread: {0} shutdown".format(self.__channel_name))
+        
+    def get_Channel(self):
+        return self.__chat_channel
 
     def __language(self, username, message, privileges):
         if regex.REG_LANG.match(message):
@@ -148,7 +151,10 @@ class Bot_Omb(threading.Thread):
                 language = message[message.find(" ")+1 : len(message)]
                 if language in self.__languages["obj"].get_Languages_avaiable():
                     self.__languages["obj"].set_Language(language)
+                    self.__languages["lan"] = self.__languages["obj"].get_Languages()
                     self.__channel.chat(self.__languages["lan"]["language_switch"].format(self.__languages["obj"].get_Language()))
+                    if self.__bets is not None or self.__greetings is not None or self.__poll is not None:
+                        self.__channel.chat(self.__languages["lan"]["language_later"])
                 else:
                     self.__channel.chat(self.__languages["lan"]["language_switch_fail"].format(language))
             else:
@@ -439,12 +445,15 @@ class Bot_Omb(threading.Thread):
             else:
                 user_privileges = 0
             if user_privileges >= privileges:
-                self.__bets = Bet(self.__languages["obj"])
-                self.__chat_channel[self.__channel_name]['bets'] = self.__bets
-                if self.__bets.start() and self.__bets is not None:
-                    self.__channel.chat(self.__languages["lan"]["bet_start_seperator"])
-                    time.sleep(config.RATE)
-                    self.__channel.chat(self.__languages["lan"]["bet_start"])
+                if self.__bets is None:
+                    self.__bets = Bet(self.__languages["obj"])
+                    self.__chat_channel[self.__channel_name]['bets'] = self.__bets
+                    if self.__bets.start() and self.__bets is not None:
+                        self.__channel.chat(self.__languages["lan"]["bet_start_seperator"])
+                        time.sleep(config.RATE)
+                        self.__channel.chat(self.__languages["lan"]["bet_start"])
+                    else:
+                        self.__channel.chat(self.__languages["lan"]["bet_start_fail"])
                 else:
                     self.__channel.chat(self.__languages["lan"]["bet_start_fail"])
             else:
