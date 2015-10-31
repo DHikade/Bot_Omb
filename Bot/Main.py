@@ -78,20 +78,24 @@ def release(value):
         if hasattr(value._tstate_lock, "release"):
             value._tstate_lock.release()
 
+def stop(value):
+    if hasattr(value, "_stop()"):
+        value._stop()
+
 def shutdown(bot_thread):
     bot_thread.part()
     for j in bot_thread.get_Channel():
         if bot_thread.get_Channel()[j]['greetings'] is not None:
             release(bot_thread.get_Channel()[j]['greetings'])
-            bot_thread.get_Channel()[j]['greetings']._stop()
+            stop(bot_thread.get_Channel()[j]['greetings'])
         if bot_thread.get_Channel()[j]['poll'] is not None:
             release(bot_thread.get_Channel()[j]['poll'])
-            bot_thread.get_Channel()[j]['poll']._stop()
+            stop(bot_thread.get_Channel()[j]['poll'])
         for announcement in bot_thread.get_Channel()[j]['announcements']:
             release(announcement)
-            announcement._stop()
+            stop(announcement)
     release(bot_thread)
-    bot_thread._stop()
+    stop(bot_thread)
 
 def follow(username, message, privileges):
     if message == "!follow":
@@ -114,17 +118,13 @@ def follow(username, message, privileges):
                     greetings_file.write("")
                     greetings_file.close()
                     settings_file = open(config.PATH+"channel/"+"#"+username+"/"+"settings.csv", "w")
-                    settings_file.write("warning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\n")
+                    settings_file.write("warning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\n")
                     settings_file.close()
                     users_file = open(config.PATH+"channel/"+"#"+username+"/"+"users.csv", "w")
                     users_file.write(username+";100;100;False;0;0;0\n")
                     users_file.close()
                     main_channel_list.append(["#"+username])
                     save("channel.csv", main_channel_list)
-                    channel_file = open(config.PATH+"channel/"+"channel.csv", "w")
-                    for i in range(len(main_channel_list)):
-                        channel_file.write(main_channel_list[i][0]+"\n")
-                    channel_file.close()
                 except OSError:
                     main_whisper.whisper(username, "Something went wrong. Please contact a Bot_Omb developer!")
                 new_bot_thread = Bot_Omb(["#"+username])
@@ -158,10 +158,7 @@ def unfollow(username, message, privileges):
                 main_channel.part("#"+username)
                 for i in range(len(bot_threads)):
                     if "#"+username == bot_threads[i].getName():
-                        bot_threads[i].part()
-                        release(bot_threads[i])
-                        bot_threads[i]._stop()
-                        del bot_threads[i]
+                        shutdown(bot_threads[i])
                         break
                 main_whisper.whisper(username, "It seems like, it is time to say goodbye!")
             else:
@@ -249,6 +246,7 @@ if __name__ == '__main__':
         lines[i] = lines[i][:len(lines[i])-1]
         bot_thread = Bot_Omb([lines[i]])
         bot_thread.setName(lines[i].replace("\n",""))
+        bot_thread.setDaemon(True)
         bot_threads.append(bot_thread)
         bot_thread.start()
     main_whisper.whisper('serdrad0x', 'The Bot was successfully started!')

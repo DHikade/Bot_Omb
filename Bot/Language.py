@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf8
+
 '''
     This is Bot_Omb, a Twitch-Moderation-Bot written in Python and here
     to help you in any kind of your daily streaming life.
