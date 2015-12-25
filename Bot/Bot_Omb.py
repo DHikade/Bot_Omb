@@ -104,7 +104,8 @@ class Bot_Omb(threading.Thread):
                 if not regex.REG_LOGIN.match(message) and username != 'bot_omb':
                     message = message[:len(message)-2]
                     actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
-                    print(actual_time + " - " + username + "@" + self.__channel_name + ": " + message)
+                    output = actual_time + " - " + username + "@" + self.__channel_name + ": " + message
+                    print(output.encode('utf-8'))
                     self.__warning(username, message)
                     self.__command(username, message)
                     self.__help(username, message, int(self.__get_element('help', self.__settings)[eSetting.state]))
