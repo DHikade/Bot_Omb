@@ -40,7 +40,7 @@ class TwitchAPI():
     def __getJSON(self, param):
         try:
             response = urlopen(param)
-            str_response = response.readall().decode('utf-8')
+            str_response = response.read().decode('utf-8')
             api = json.loads(str_response)
         except:
             api = None
