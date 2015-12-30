@@ -26,6 +26,7 @@
 
 from Bot_Omb import Bot_Omb
 from irc import irc
+from TwitchAPI import TwitchAPI
 import eUser
 import regex
 
@@ -231,6 +232,20 @@ def show_threads(username, message, privileges):
         else:
             main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
+def show_follows(username, message, privileges):
+    if message == "!follows":
+        user = get_element(username, main_users)
+        if user is not None:
+            user_privileges = int(user[eUser.privileges])
+        else:
+            user_privileges = 0
+        if user_privileges >= privileges:
+            api = TwitchAPI(username)
+            notific_list = api.getKraken_Follows_Notifications()
+            main_whisper.whisper(username, "{0} of your followers receiving a message when your stream starts".format(len(notific_list)))
+        else:
+            main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.$
+
 if __name__ == '__main__':
     main_name = "#bot_omb"
     main_channel = irc(config.HOST, config.PORT, config.NICK, config.PASS, [main_name])
@@ -272,3 +287,4 @@ if __name__ == '__main__':
                 restart_all(username, message, 99)
                 show_threads(username, message, 99)
                 shutdown_all(username, message, 99)
+                show_follows(username, message, 99)
