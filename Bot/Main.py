@@ -130,6 +130,7 @@ def follow(username, message, privileges):
                     main_whisper.whisper(username, "Something went wrong. Please contact a Bot_Omb developer!")
                 new_bot_thread = Bot_Omb(["#"+username])
                 new_bot_thread.setName("#"+username)
+                new_bot_thread.setDaemon(True)
                 bot_threads.append(new_bot_thread)
                 new_bot_thread.start()
                 main_whisper.whisper(username, "I joined your stream! If you want to use my full power, you just need to make me a Mod. Otherwise the auto moderation function will not work.")
