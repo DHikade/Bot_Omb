@@ -35,6 +35,9 @@ import os
 import shutil
 import re
 import time
+import threading
+
+follow_requests = {}
 
 def show(elements):
     for i in range(len(elements)):
@@ -241,11 +244,20 @@ def show_follows(username, message, privileges):
         else:
             user_privileges = 0
         if user_privileges >= privileges:
-            api = TwitchAPI(username)
-            notific_list = api.getKraken_Follows_Notifications()
-            main_whisper.whisper(username, "{0} of your followers receiving a message when your stream starts".format(len(notific_list)))
+            if username in follow_requests:
+                main_whisper.whisper(username, "Your request is still in progress!")
+            else:
+                follow_thread = threading.Thread(target=show_follows_thread, args=(username,))
+                follow_requests[username] = follow_thread
+                follow_thread.start()
         else:
-            main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.$
+            main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
+
+def show_follows_thread(username):
+    api = TwitchAPI(username)
+    notific_list = api.getKraken_Follows_Notifications()
+    main_whisper.whisper(username, "{0} of your followers receiving a message when your stream starts".format(len(notific_list)))
+    del follow_requests[username]
 
 if __name__ == '__main__':
     main_name = "#bot_omb"
@@ -288,4 +300,4 @@ if __name__ == '__main__':
                 restart_all(username, message, 99)
                 show_threads(username, message, 99)
                 shutdown_all(username, message, 99)
-                show_follows(username, message, 99)
+                show_follows(username, message, 0)
