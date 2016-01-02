@@ -32,12 +32,15 @@ import json
 
 class TwitchAPI():
     
-    def __init__(self, channel_Nick):
+    def __init__(self, channel_Nick = None):
         self.__channel_Nick = channel_Nick
         self.__baseKraken = "https://api.twitch.tv/kraken/"
         self.__baseTMI = "https://tmi.twitch.tv/group/user/"
+
+    def setChannel(self, channel_Nick):
+        self.__channel_Nick = channel_Nick
     
-    def __getJSON(self, param):
+    def getJSON(self, param):
         try:
             response = urlopen(param)
             str_response = response.read().decode('utf-8')
@@ -47,13 +50,20 @@ class TwitchAPI():
         return api
     
     def getKraken_Streams(self):
-        return self.__getJSON(self.__baseKraken+"streams/"+self.__channel_Nick)
+        return self.getJSON(self.__baseKraken+"streams/"+self.__channel_Nick)
     
     def getKraken_Channels(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick)
-    
+        return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick)
+
+    def getKraken_isOnline(self):
+        status = self.getJSON(self.__baseKraken+"streams/"+self.__channel_Nick)['stream']
+        if status is None:
+            return False
+        else:
+            return True
+
     def getKraken_Follows(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/follows")
+        return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/follows")
     
     def getKraken_Follows_List(self):
         follow = []
@@ -61,7 +71,7 @@ class TwitchAPI():
         while len(json["follows"]) > 0:
             for i in range(len(json["follows"])):
                 follow.append(json["follows"][i]["user"]["name"])
-            json = self.__getJSON(json["_links"]["next"])
+            json = self.getJSON(json["_links"]["next"])
         return follow
     
     def getKraken_Follows_Notifications(self):
@@ -71,20 +81,20 @@ class TwitchAPI():
             for i in range(len(json["follows"])):
                 if json["follows"][i]["notifications"]:
                     follow.append(json["follows"][i]["user"]["name"])
-            json = self.__getJSON(json["_links"]["next"])
+            json = self.getJSON(json["_links"]["next"])
         return follow
     
     def getKraken_Features(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/features") #Brauch Access Token
+        return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/features") #Brauch Access Token
     
     def getKraken_Subscriptions(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/subscriptions") #Brauch Access Token
+        return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/subscriptions") #Brauch Access Token
     
     def getKraken_Editors(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/editors") #Brauch Access Token
+        return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/editors") #Brauch Access Token
     
     def getKraken_Videos(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/videos")
+        return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/videos")
     
     def getKraken_Videos_List(self):
         video = []
@@ -92,20 +102,20 @@ class TwitchAPI():
         while len(json["videos"]) > 0:
             for i in range(len(json["videos"])):
                 video.append(json["videos"][i]["url"])
-            json = self.__getJSON(json["_links"]["next"])
+            json = self.getJSON(json["_links"]["next"])
         return video
     
     def getKraken_Teams(self):
-        return self.__getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/teams")
+        return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick+"/teams")
     
     def getKraken_Chat(self):
-        return self.__getJSON(self.__baseKraken+"chat/"+self.__channel_Nick)
+        return self.getJSON(self.__baseKraken+"chat/"+self.__channel_Nick)
     
     def getTMI_Chatters(self):
-        return self.__getJSON(self.__baseTMI+self.__channel_Nick+"/chatters")
+        return self.getJSON(self.__baseTMI+self.__channel_Nick+"/chatters")
     
     def getTMI_Chatters_Users(self):
-        return self.__getJSON(self.__baseTMI+self.__channel_Nick+"/chatters")["chatters"]["viewers"]
+        return self.getJSON(self.__baseTMI+self.__channel_Nick+"/chatters")["chatters"]["viewers"]
     
     def getTMI_Chatter_Count(self):
-        return self.__getJSON(self.__baseTMI+self.__channel_Nick)["chatter_count"]
+        return self.getJSON(self.__baseTMI+self.__channel_Nick)["chatter_count"]

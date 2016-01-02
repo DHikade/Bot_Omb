@@ -27,6 +27,7 @@
 from Bot_Omb import Bot_Omb
 from irc import irc
 from TwitchAPI import TwitchAPI
+from Twitter import Twitter
 import eUser
 import regex
 
@@ -82,24 +83,24 @@ def release(value):
         if hasattr(value._tstate_lock, "release"):
             value._tstate_lock.release()
 
-def stop(value):
-    if hasattr(value, "_stop()"):
-        value._stop()
-
 def shutdown(bot_thread):
     bot_thread.part()
     for j in bot_thread.get_Channel():
         if bot_thread.get_Channel()[j]['greetings'] is not None:
             release(bot_thread.get_Channel()[j]['greetings'])
-            stop(bot_thread.get_Channel()[j]['greetings'])
+            if hasattr(bot_thread.get_Channel()[j]['greetings'], "_stop()"):
+            	bot_thread.get_Channel()[j]['greetings']._stop()
         if bot_thread.get_Channel()[j]['poll'] is not None:
             release(bot_thread.get_Channel()[j]['poll'])
-            stop(bot_thread.get_Channel()[j]['poll'])
+            if hasattr(bot_thread.get_Channel()[j]['poll'], "_stop"):
+            	bot_thread.get_Channel()[j]['poll']._stop()
         for announcement in bot_thread.get_Channel()[j]['announcements']:
             release(announcement)
-            stop(announcement)
+            if hasattr(announcement, "_stop"):
+                announcement._stop()
     release(bot_thread)
-    stop(bot_thread)
+    if hasattr(bot_thread, "_stop()"):
+        bot_thread._stop()
 
 def follow(username, message, privileges):
     if message == "!follow":
@@ -160,7 +161,6 @@ def unfollow(username, message, privileges):
                             break
                 except OSError:
                     main_whisper.whisper(username, "Something went wrong. Please contact a Bot_Omb developer!")
-                main_channel.part("#"+username)
                 for i in range(len(bot_threads)):
                     if "#"+username == bot_threads[i].getName():
                         shutdown(bot_threads[i])
@@ -248,8 +248,8 @@ def show_follows(username, message, privileges):
                 main_whisper.whisper(username, "Your request is still in progress!")
             else:
                 follow_thread = threading.Thread(target=show_follows_thread, args=(username,))
-                follow_requests[username] = follow_thread
                 follow_thread.start()
+                follow_requests[username] = follow_thread
         else:
             main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
@@ -277,6 +277,7 @@ if __name__ == '__main__':
         bot_thread.setDaemon(True)
         bot_threads.append(bot_thread)
         bot_thread.start()
+    twitter = Twitter()
     main_whisper.whisper('serdrad0x', 'The Bot was successfully started!')
     while True:
         response_channel = main_channel.receive(1024)
@@ -300,4 +301,5 @@ if __name__ == '__main__':
                 restart_all(username, message, 99)
                 show_threads(username, message, 99)
                 shutdown_all(username, message, 99)
-                show_follows(username, message, 0)
+                show_follows(username, message, 99)
+
