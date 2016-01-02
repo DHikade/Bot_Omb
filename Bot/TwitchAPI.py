@@ -56,8 +56,10 @@ class TwitchAPI():
         return self.getJSON(self.__baseKraken+"channels/"+self.__channel_Nick)
 
     def getKraken_isOnline(self):
-        status = self.getJSON(self.__baseKraken+"streams/"+self.__channel_Nick)['stream']
+        status = self.getJSON(self.__baseKraken+"streams/"+self.__channel_Nick)
         if status is None:
+            return False
+        elif status['stream'] is None:
             return False
         else:
             return True
