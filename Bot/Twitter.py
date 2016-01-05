@@ -61,7 +61,7 @@ class Twitter(threading.Thread):
                     if self.__api_Twitch.getKraken_isOnline():
                         if not self.__channel_status[channel]:
                             self.__channel_status[channel] = True
-                            output = channel + " " + random.choice(self.__status) + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
+                            output = channel + " " + random.choice(self.__status).encode("utf-8") + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
                             self.__api_Twitter.update_status(status=output)
                     else:
                         self.__channel_status[channel] = False
