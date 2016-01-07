@@ -36,11 +36,12 @@ class Announcement(threading.Thread):
         self.__hour = hour
         self.__minute = minute
         self.__second = second
+        self.__active = True
     
     def run(self):
-        while self.isAlive():
+        while self.__active:
             time.sleep(self.__hour * 60 * 60 + self.__minute * 60 + self.__second)
-            if self.isAlive():
+            if self.__active:
                 self.__channel.chat(self.__message)
             
     def getData(self):
@@ -60,3 +61,6 @@ class Announcement(threading.Thread):
         
     def setMessage(self, message):
         self.__message = message
+        
+    def finish(self):
+        self.__active = False
