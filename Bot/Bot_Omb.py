@@ -45,6 +45,7 @@ import config
 class Bot_Omb(threading.Thread):
     def __init__(self, chat_channel):
         threading.Thread.__init__(self)
+        self.__active = True
         self.__uptime = time.strftime("%d.%m.%Y %H:%M:%S")
         self.__channel_name = ""
         self.__chat_channel = {}
@@ -67,7 +68,7 @@ class Bot_Omb(threading.Thread):
     def run(self):
         print("Thread: {0} started".format(self.__chat_channel))
         self.__whisper.whisper('bot_omb', 'Bot activated')
-        while self.isAlive():
+        while self.__active:
             response_channel = self.__channel.receive(1024)
             if response_channel == "PING :tmi.twitch.tv\r\n":
                 self.__channel.pong()
@@ -900,3 +901,6 @@ class Bot_Omb(threading.Thread):
                 self.__whisper.whisper(username, self.__languages["lan"]["help_levels"])
             elif help_command == "submit":
                 self.__whisper.whisper(username, self.__languages["lan"]["help_submit"])
+    
+    def finish(self):
+        self.__active = False
