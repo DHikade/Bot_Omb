@@ -40,6 +40,7 @@ class Greetings(threading.Thread):
         self.__interval = interval
         self.__name = name
         self.__api = TwitchAPI(self.__name.replace("#",""))
+        self.__acitve = True
         self.start()
 
     def __greet(self, users):
@@ -54,9 +55,9 @@ class Greetings(threading.Thread):
         self.__channel.chat(self.__language["greetings"].format(usernames))
 
     def run(self):
-        while self.isAlive():
+        while self.__active:
             time.sleep(self.__interval)
-            if self.isAlive():
+            if self.__active:
                 users = self.__api.getTMI_Chatters_Users()
                 greet = []
                 for i in range(len(users)):
@@ -73,3 +74,6 @@ class Greetings(threading.Thread):
                 output += str(data[i][j]) + ";"
             file_save.write(output[:len(output)-1]+"\n")
         file_save.close()
+        
+    def finish(self):
+        self.__active = False
