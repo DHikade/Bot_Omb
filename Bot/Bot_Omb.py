@@ -338,15 +338,20 @@ class Bot_Omb(threading.Thread):
                         break
                 for key in self.__announcements:
                     if key.getID() == announce:
-                        if hasattr(key, "_tstate_lock"):
-                            key._tstate_lock.release()
-                        key._stop()
+                        self.__release(key)
+                        if hasattr(key, "_stop()"):
+                            key._stop()
                         self.__announcements.remove(key)
                         self.__channel.chat(self.__languages["lan"]["announcement_remove"].format(announce))
                         break
                 self.__save("announcements.csv", self.__announcelist)
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __release(self, value):
+        if hasattr(value, "_tstate_lock"):
+            if hasattr(value._tstate_lock, "release"):
+                value._tstate_lock.release()
 
     def __announce_add(self, username, message, privileges):
         if re.match('!announce',message):
