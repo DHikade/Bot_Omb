@@ -87,20 +87,12 @@ def shutdown(bot_thread):
     bot_thread.part()
     for j in bot_thread.get_Channel():
         if bot_thread.get_Channel()[j]['greetings'] is not None:
-            release(bot_thread.get_Channel()[j]['greetings'])
-            if hasattr(bot_thread.get_Channel()[j]['greetings'], "_stop()"):
-            	bot_thread.get_Channel()[j]['greetings']._stop()
+            bot_thread.get_Channel()[j]['greetings'].finish()
         if bot_thread.get_Channel()[j]['poll'] is not None:
-            release(bot_thread.get_Channel()[j]['poll'])
-            if hasattr(bot_thread.get_Channel()[j]['poll'], "_stop"):
-            	bot_thread.get_Channel()[j]['poll']._stop()
+            bot_thread.get_Channel()[j]['poll'].finish()
         for announcement in bot_thread.get_Channel()[j]['announcements']:
-            release(announcement)
-            if hasattr(announcement, "_stop"):
-                announcement._stop()
-    release(bot_thread)
-    if hasattr(bot_thread, "_stop()"):
-        bot_thread._stop()
+            announcement.finish()
+    bot_thread.finish()
 
 def follow(username, message, privileges):
     if message == "!follow":
