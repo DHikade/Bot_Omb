@@ -39,14 +39,16 @@ class Poll(threading.Thread):
         self.__poll_allow = False
         self.__channel = channel
         self.__win_message = ""
+        self.__active = True
 
     def run(self):
         self.__poll_allow = True
         self.__channel.chat(self.__language["poll_start"].format(self.__poll_name, self.__poll_text))
         time.sleep(int(self.__minute)*60 + int(self.__second))
         self.__poll_allow = False
-        self.__channel.chat(self.__language["poll_finish"].format(self.__poll_name))
-        self.__result()
+        if self.__active:
+            self.__channel.chat(self.__language["poll_finish"].format(self.__poll_name))
+            self.__result()
 
     def __start(self, poll_options):
         poll_options = poll_options[1 : len(poll_options)]
@@ -97,3 +99,6 @@ class Poll(threading.Thread):
 
     def result(self):
         self.__channel.chat(self.__win_message)
+    
+    def finish(self):
+        self.__active = False
