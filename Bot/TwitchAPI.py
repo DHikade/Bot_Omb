@@ -112,6 +112,15 @@ class TwitchAPI():
     
     def getKraken_Chat(self):
         return self.getJSON(self.__baseKraken+"chat/"+self.__channel_Nick)
+
+    def getKraken_Up_Since(self):
+        up_since = self.getKraken_Streams()
+        if up_since is not None:
+            up_since_stream = up_since["stream"]
+            if up_since_stream is not None:
+                return up_since_stream["created_at"]
+        else:
+            return None 
     
     def getTMI_Chatters(self):
         return self.getJSON(self.__baseTMI+self.__channel_Nick+"/chatters")

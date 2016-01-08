@@ -26,6 +26,7 @@
 
 import re
 import time
+import datetime
 import copy
 
 import threading
@@ -36,6 +37,7 @@ from Poll import Poll
 from irc import irc
 from Greetings import Greetings
 from Newtimenowapi import Newtimenowapi
+from TwitchAPI import TwitchAPI
 from Language import Language
 import eCommand
 import eSetting
@@ -141,6 +143,7 @@ class Bot_Omb(threading.Thread):
                     self.__poll_vote(username, message, int(self.__get_element('poll_vote', self.__settings)[eSetting.state]))
                     self.__poll_result(username, message, int(self.__get_element('poll_result', self.__settings)[eSetting.state]))
                     self.__language(username, message, int(self.__get_element('language', self.__settings)[eSetting.state]))
+                    self.__upsince(username, message, int(self.__get_element('upsince', self.__settings)[eSetting.state]))
                     time.sleep(config.RATE)
         print("Thread: {0} shutdown".format(self.__channel_name))
         
@@ -168,6 +171,25 @@ class Bot_Omb(threading.Thread):
                         self.__channel.chat(self.__languages["lan"]["language_later"])
                 else:
                     self.__channel.chat(self.__languages["lan"]["language_switch_fail"].format(language))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __upsince(self, username, message, privileges):
+        if message == "!uptime":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                api = TwitchAPI(self.__channel_name[1:])
+                uptime = api.getKraken_Up_Since()
+                if uptime is not None:
+                    uptime = re.sub('[-:TZ]', '', uptime)
+                    up = datetime.datetime.now() - datetime.datetime.strptime(uptime, "%Y%m%d%H%M%S")
+                    self.__channel.chat(self.__languages["lan"]["upsince"].format(str(up)[0:str(up).rfind('.')]))
+                else:
+                    self.__channel.chat(self.__languages["lan"]["upsince_not"])
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
