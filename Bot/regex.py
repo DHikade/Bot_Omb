@@ -54,3 +54,4 @@ REG_SMM_SUBMIT_OTHER = re.compile('!submit[\s]{1}[\S]+[\s]{1}([a-zA-Z0-9]{4}-){3
 REG_SMM_REMOVE = re.compile('!remove[\s]{1}level[\s]{1}[\S]+')
 REG_POLL = re.compile('!poll[\s]{1}.+[\s]{1}\(.+\)[\s]{1}[0-5]?[0-9]:[0-5][0-9]$')
 REG_POLL_VOTE = re.compile('!vote[\s]{1}[0-9]+')
+REG_FOLLOW_MEMBER_OTHER = re.compile('!member[\s]{1}[\S]+$')

@@ -126,6 +126,7 @@ class Bot_Omb(threading.Thread):
                     self.__bet_reset(username, message, int(self.__get_element('bet_reset', self.__settings)[eSetting.state]))
                     self.__follow(username, message, int(self.__get_element('follow', self.__settings)[eSetting.state]))
                     self.__follow_member(username, message, int(self.__get_element('follow_member', self.__settings)[eSetting.state]))
+                    self.__follow_member_other(username, message, int(self.__get_element('follow_member_other', self.__settings)[eSetting.state]))
                     self.__unfollow(username, message, int(self.__get_element('unfollow', self.__settings)[eSetting.state]))
                     self.__info(username, message, int(self.__get_element('info', self.__settings)[eSetting.state]))
                     self.__announce_add(username, message, int(self.__get_element('announce_add', self.__settings)[eSetting.state]))
@@ -482,7 +483,25 @@ class Bot_Omb(threading.Thread):
                 else:
                     self.__channel.chat(self.__languages["lan"]["follow_member"].format(username, date))
             else:
-                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges)) 
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __follow_member_other(self, username, message, privileges):
+        if regex.REG_FOLLOW_MEMBER_OTHER.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                name = message[message.find(' ')+1:len(message)]
+                api = Newtimenowapi(self.__channel_name[1:])
+                date = str(api.getNewTimeNow_Follow_Since(name))
+                if re.match("Not following...", date):
+                    self.__channel.chat(self.__languages["lan"]["follow_member_not"].format(name))
+                else:
+                    self.__channel.chat(self.__languages["lan"]["follow_member"].format(name, date))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
     def __unfollow(self, username, message, privileges):
         if message == "!unfollow":
