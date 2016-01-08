@@ -117,7 +117,7 @@ class TwitchAPI():
         return self.getJSON(self.__baseTMI+self.__channel_Nick+"/chatters")
     
     def getTMI_Chatters_Users(self):
-        chatters = self.getTMI_Chatters
+        chatters = self.getTMI_Chatters()
         if chatters is not None:
             return chatters["chatters"]["viewers"]
         else:
