@@ -99,6 +99,6 @@ class Poll(threading.Thread):
 
     def result(self):
         self.__channel.chat(self.__win_message)
-    
+
     def finish(self):
         self.__active = False

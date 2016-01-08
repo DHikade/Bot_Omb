@@ -26,6 +26,7 @@
 
 import re
 import time
+import copy
 
 import threading
 
@@ -34,6 +35,7 @@ from Announcement import Announcement
 from Poll import Poll
 from irc import irc
 from Greetings import Greetings
+from Newtimenowapi import Newtimenowapi
 from Language import Language
 import eCommand
 import eSetting
@@ -61,7 +63,7 @@ class Bot_Omb(threading.Thread):
                 announcements.append(announcement_thread)
             self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : Language()}
             if self.__string_to_bool(self.__get_element('greetings', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
-                self.__chat_channel[chat_channel[i]]["greetings"] = Greetings(self.__chat_channel[self.__channel_name]['language'], chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]))
+                self.__chat_channel[chat_channel[i]]["greetings"] = Greetings(self.__chat_channel[chat_channel[i]]['language'], chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]))
             for key in announcements:
                 key.start()
 
@@ -123,6 +125,7 @@ class Bot_Omb(threading.Thread):
                     self.__bet_stop(username, message, int(self.__get_element('bet_stop', self.__settings)[eSetting.state]))
                     self.__bet_reset(username, message, int(self.__get_element('bet_reset', self.__settings)[eSetting.state]))
                     self.__follow(username, message, int(self.__get_element('follow', self.__settings)[eSetting.state]))
+                    self.__follow_member(username, message, int(self.__get_element('follow_member', self.__settings)[eSetting.state]))
                     self.__unfollow(username, message, int(self.__get_element('unfollow', self.__settings)[eSetting.state]))
                     self.__info(username, message, int(self.__get_element('info', self.__settings)[eSetting.state]))
                     self.__announce_add(username, message, int(self.__get_element('announce_add', self.__settings)[eSetting.state]))
@@ -229,9 +232,9 @@ class Bot_Omb(threading.Thread):
                 smm_code = message[message.find(' ')+1:len(message)]
                 if username in self.__smm_submits:
                     self.__whisper.whisper(username, self.__languages["lan"]["smm_level_switch"].format(self.__smm_submits[username], smm_code))
-                    self.__smm_submits[username] = smm_code
+                    self.__smm_submits[username]["code"] = smm_code
                 else:
-                    self.__smm_submits[username] = smm_code
+                    self.__smm_submits[username] = {"user" : username, "code" : smm_code, "id" : time.time()}
                     self.__whisper.whisper(username, self.__languages["lan"]["smm_level_list"])
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
@@ -248,9 +251,9 @@ class Bot_Omb(threading.Thread):
                 smm_code = message[message.rfind(' ')+1:len(message)]
                 if smm_user in self.__smm_submits:
                     self.__channel.chat(self.__languages["lan"]["smm_level_switch"].format(self.__smm_submits[smm_user], smm_code))
-                    self.__smm_submits[smm_user] = smm_code
+                    self.__smm_submits[smm_user]["code"] = smm_code
                 else:
-                    self.__smm_submits[smm_user] = smm_code
+                    self.__smm_submits[smm_user] = {"user" : smm_user, "code" : smm_code, "id" : time.time()}
                     self.__channel.chat(self.__languages["lan"]["smm_level_list_user"].format(smm_user))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
@@ -266,9 +269,21 @@ class Bot_Omb(threading.Thread):
                 smm_user = message[message.rfind(' ')+1:len(message)]
                 if smm_user in self.__smm_submits:
                     self.__channel.chat(self.__languages["lan"]["smm_level_list_delete"].format(self.__smm_submits[smm_user], smm_user))
-                    self.__smm_submits.__delitem__(smm_user)
+                    self.__smm_submits.pop(smm_user, None)
                 else:
                     self.__channel.chat(self.__languages["lan"]["smm_level_list_fail"].format(smm_user))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __smm_level_current(self, username, message, privileges):
+        if message == "!current":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                ''' ToDo '''
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -280,9 +295,27 @@ class Bot_Omb(threading.Thread):
             else:
                 user_privileges = 0
             if user_privileges >= privileges:
-                self.__channel.chat(self.__languages["lan"]["smm_level_list_show"].format(str(self.__smm_submits)))
+                self.__channel.chat(self.__languages["lan"]["smm_level_list_show"].format(str(self.__sortSMM())))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __sortSMM(self):
+        sorted_smm_submits = []
+        smm_submits = copy.deepcopy(self.__smm_submits)
+        while len(sorted_smm_submits) != len(smm_submits):
+            value_high = float("inf")
+            user_high = None
+            keys = smm_submits.keys()
+            for i in range(0, len(keys)) :
+                if ((smm_submits[keys[i]]["id"] < value_high) and (keys[i] not in sorted_smm_submits)):
+                    value_high = smm_submits[keys[i]]["id"]
+                    user_high = keys[i]
+            smm_submits[user_high].pop("id", None)
+            sorted_smm_submits.append(smm_submits[user_high])
+        return sorted_smm_submits
+
+    def __sortSMMNext(self):
+        return self.__sortSMM()[0]
 
     def __smm_level_next(self, username, message, privileges):
         if message == "!next":
@@ -293,8 +326,9 @@ class Bot_Omb(threading.Thread):
                 user_privileges = 0
             if user_privileges >= privileges:
                 if len(self.__smm_submits.keys()) >= 1:
-                    level = self.__smm_submits.popitem()
-                    self.__channel.chat(self.__languages["lan"]["smm_level_next"].format(level[0], level[1]))
+                    level = self.__sortSMMNext()
+                    self.__smm_submits.pop(level["user"], None)
+                    self.__channel.chat(self.__languages["lan"]["smm_level_next"].format(level["user"], level["code"]))
                 else:
                     self.__channel.chat(self.__languages["lan"]["smm_level_next_fail"])
             else:
@@ -432,6 +466,23 @@ class Bot_Omb(threading.Thread):
     def __follow(self, username, message, privileges):
         if message == "!follow":
             self.__whisper.whisper(username, self.__languages["lan"]["follow"].format(username))
+
+    def __follow_member(self, username, message, privileges):
+        if message == "!member":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                api = Newtimenowapi(self.__channel_name)
+                date = str(api.getNewTimeNow_Follow_Since(username))
+                if re.match("Not following...", date):
+                    self.__channel.chat(self.__languages["lan"]["follow_member_not"].format(username))
+                else:
+                    self.__channel.chat(self.__languages["lan"]["follow_member"].format(username, date))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges)) 
 
     def __unfollow(self, username, message, privileges):
         if message == "!unfollow":
@@ -901,6 +952,6 @@ class Bot_Omb(threading.Thread):
                 self.__whisper.whisper(username, self.__languages["lan"]["help_levels"])
             elif help_command == "submit":
                 self.__whisper.whisper(username, self.__languages["lan"]["help_submit"])
-    
+
     def finish(self):
         self.__active = False

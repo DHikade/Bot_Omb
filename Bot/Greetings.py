@@ -40,7 +40,7 @@ class Greetings(threading.Thread):
         self.__interval = interval
         self.__name = name
         self.__api = TwitchAPI(self.__name.replace("#",""))
-        self.__acitve = True
+        self.__active = True
         self.start()
 
     def __greet(self, users):
@@ -74,6 +74,6 @@ class Greetings(threading.Thread):
                 output += str(data[i][j]) + ";"
             file_save.write(output[:len(output)-1]+"\n")
         file_save.close()
-        
+
     def finish(self):
         self.__active = False

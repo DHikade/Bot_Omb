@@ -61,6 +61,6 @@ class Announcement(threading.Thread):
         
     def setMessage(self, message):
         self.__message = message
-        
+
     def finish(self):
         self.__active = False

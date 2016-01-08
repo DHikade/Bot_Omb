@@ -55,7 +55,6 @@ class Twitter(threading.Thread):
                 for channel in channels["stream"]:
                     if channel not in self.__channel_status:
                         self.__channel_status[channel] = False
-
                     self.__api_Twitch.setChannel(channel)
                 
                     if self.__api_Twitch.getKraken_isOnline():
