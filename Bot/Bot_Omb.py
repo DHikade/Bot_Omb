@@ -61,7 +61,8 @@ class Bot_Omb(threading.Thread):
                 announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
                 announcement_thread.setName(key[eAnnouncement.ident])
                 announcements.append(announcement_thread)
-            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : Language()}
+            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None}
+            self.__chat_channel[chat_channel[i]]["language"] = Language(self.__get_element('language_chat', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state])
             if self.__string_to_bool(self.__get_element('greetings', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
                 self.__chat_channel[chat_channel[i]]["greetings"] = Greetings(self.__chat_channel[chat_channel[i]]['language'], chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]))
             for key in announcements:
@@ -159,6 +160,10 @@ class Bot_Omb(threading.Thread):
                     self.__languages["obj"].set_Language(language)
                     self.__languages["lan"] = self.__languages["obj"].get_Languages()
                     self.__channel.chat(self.__languages["lan"]["language_switch"].format(self.__languages["obj"].get_Language()))
+                    self.__update("language_chat", [None, language], self.__settings)
+                    self.__save("settings.csv", self.__settings)
+                    self.__settings = self.__load("channel/"+self.__channel_name+"/settings.csv")
+                    self.__chat_channel[self.__channel_name]["settings"] = self.__settings
                     if self.__bets is not None or self.__greetings is not None or self.__poll is not None:
                         self.__channel.chat(self.__languages["lan"]["language_later"])
                 else:
@@ -665,7 +670,7 @@ class Bot_Omb(threading.Thread):
                                 if hasattr(self.__greetings, "_tstate_lock"):
                                     if hasattr(self.__greetings._tstate_lock, "release"):
                                         self.__greetings._tstate_lock.release()
-                                self.__greetings._stop()
+                                self.__greetings.finish()
                                 self.__greetings = None
                                 self.__chat_channel[self.__channel_name]['greetings'] = self.__greetings
                     elif setting_name != "warning_url" and setting_name != "warning_caps" and setting_name != "warning_long_text" and setting_name != "greetings":
