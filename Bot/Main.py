@@ -105,6 +105,13 @@ def follow(username, message, privileges):
             if not has(main_channel_list, "#"+username):
                 try:
                     os.mkdir(config.PATH+"channel/"+"#"+username)
+                    os.mkdir(config.PATH+"channel/"+"#"+username+"/bank")
+                    guards_file = open(config.PATH+"channel/"+"#"+username+"/bank/"+"guards.csv", "w")
+                    guards_file.write("Karl;20\nMark;50\nLisa;40\n")
+                    guards_file.close()
+                    whitelist_file = open(config.PATH+"channel/"+"#"+username+"/"+"whitelist.csv", "w")
+                    whitelist_file.write("bot_omb;\nnightbot;\ntipeeebot;\nwizebot;\nmikuia;\nmoobot;\n")
+                    whitelist_file.close()
                     commands_file = open(config.PATH+"channel/"+"#"+username+"/"+"commands.csv", "w")
                     commands_file.write("")
                     commands_file.close()
@@ -115,11 +122,14 @@ def follow(username, message, privileges):
                     greetings_file.write("")
                     greetings_file.close()
                     settings_file = open(config.PATH+"channel/"+"#"+username+"/"+"settings.csv", "w")
-                    settings_file.write("language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\n")
+                    settings_file.write("language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\nupsince;0\nrank_add;99\nrank_remove;99\nrank_show;99\nrank_show_me;0\nbank_robbery;99\nbank_spy;99\nbank_robbery_flee;99\nbank_guard_add;99\nbank_guard_remove;99\nbank_guard_show;99\nwhitelist_add;99\nwhitelist_remove;99\nwhitelist_show;99\n")
                     settings_file.close()
                     users_file = open(config.PATH+"channel/"+"#"+username+"/"+"users.csv", "w")
                     users_file.write(username+";100;100;False;0;0;0\n")
                     users_file.close()
+                    ranks_file = open(config.PATH+"channel/"+"#"+username+"/"+"ranks.csv", "w")
+                    ranks_file.write("")
+                    ranks_file.close()
                     main_channel_list.append(["#"+username])
                     save("channel.csv", main_channel_list)
                 except OSError:
@@ -236,20 +246,41 @@ def show_follows(username, message, privileges):
         else:
             user_privileges = 0
         if user_privileges >= privileges:
-            if username in follow_requests:
-                main_whisper.whisper(username, "Your request is still in progress!")
-            else:
-                follow_thread = threading.Thread(target=show_follows_thread, args=(username,))
-                follow_thread.start()
-                follow_requests[username] = follow_thread
+            api = TwitchAPI(username)
+            aprox_time = int(api.getKraken_Followers() * 0.025)
+            main_whisper.whisper(username, "Please be patient, while Bot_Omb is handling your !follows request. It will take approximate "+str(aprox_time)+" seconds.")
+            follow_thread = threading.Thread(target=api.show_follows_thread, args=(main_whisper, username,))
+            follow_thread.setDaemon(True)
+            follow_thread.start()
         else:
             main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
-def show_follows_thread(username):
-    api = TwitchAPI(username)
-    notific_list = api.getKraken_Follows_Notifications()
-    main_whisper.whisper(username, "{0} of your followers receiving a message when your stream starts".format(len(notific_list)))
-    del follow_requests[username]
+def show_follows_other(username, message, privileges):
+    if regex.REG_FOLLOWS_OTHER.match(message):
+        user = get_element(username, main_users)
+        if user is not None:
+            user_privileges = int(user[eUser.privileges])
+        else:
+            user_privileges = 0
+        if user_privileges >= privileges:
+            check = True
+            if username in follow_requests:
+                if follow_requests[username].isAlive():
+                    check = False
+                    main_whisper.whisper(username, "Your request is still in progress, please be patient!")
+                else:
+                    del follow_requests[username]
+            if check:
+                follows_name = message[message.find(' ')+1 : len(message)]
+                api = TwitchAPI(follows_name)
+                aprox_time = int(api.getKraken_Followers() * 0.025)
+                main_whisper.whisper(username, "Please be patient, while Bot_Omb is handling your !follows request. It will take approximate "+str(aprox_time)+" seconds.")
+                follow_thread = threading.Thread(target=api.show_follows_thread, args=(main_whisper, follows_name, username,))
+                follow_requests[username] = follow_thread
+                follow_thread.setDaemon(True)
+                follow_thread.start()
+        else:
+            main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
 if __name__ == '__main__':
     main_name = "#bot_omb"
@@ -286,12 +317,16 @@ if __name__ == '__main__':
             if not regex.REG_LOGIN.match(message) and username != 'bot_omb':
                 message = message[:len(message)-2]
                 actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
-                print(actual_time + " - " + username + "@" + main_name + ": " + message)
+                try:
+                    output = actual_time + " - " + username + "@" + main_name + ": " + message
+                    print(output.encode('utf-8'))
+                except:
+                    print("Nothing to print")
                 follow(username, message, 0)
                 unfollow(username, message, 0)
                 restart(username, message, 0)
                 restart_all(username, message, 99)
                 show_threads(username, message, 99)
                 shutdown_all(username, message, 99)
-                show_follows(username, message, 99)
-
+                show_follows(username, message, 0)
+                show_follows_other(username, message, 99)

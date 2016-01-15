@@ -77,18 +77,18 @@ class irc():
         self.__irc_channel_active = channel
 
     def __login(self, nick, password):
-        self.__irc_socket.send("PASS {0}\r\n".format(password).encode("utf-8"))
-        self.__irc_socket.send("NICK {0}\r\n".format(nick).encode("utf-8"))
+        self.__irc_socket.send("PASS {0}\r\n".format(password))
+        self.__irc_socket.send("NICK {0}\r\n".format(nick))
 
     def join(self, channel):
-        self.__irc_socket.send("JOIN {0}\r\n".format(channel).encode("utf-8"))
+        self.__irc_socket.send("JOIN {0}\r\n".format(channel))
 
     def part(self, channel):
-        self.__irc_socket.send("PART {0}\r\n".format(channel).encode("utf-8"))
+        self.__irc_socket.send("PART {0}\r\n".format(channel))
 
     def __enable_whisper(self):
-        self.__irc_socket.send("/CAP REQ :twitch.tv/commands".encode("utf-8"))
-        self.__irc_socket.send("/CAP REQ :twitch.tv/tags".encode("utf-8"))
+        self.__irc_socket.send("/CAP REQ :twitch.tv/commands\r\n")
+        self.__irc_socket.send("/CAP REQ :twitch.tv/tags\r\n")
 
     def quit(self):
         self.__irc_socket.close()
@@ -97,23 +97,22 @@ class irc():
         self.__irc_socket.connect((host, port))
 
     def chat(self, message):
-        self.__irc_socket.send("PRIVMSG {0} :{1} \r\n".format(self.__irc_channel_active, message).encode("utf-8"))
+        self.__irc_socket.send("PRIVMSG {0} :{1} \r\n".format(self.__irc_channel_active, message))
 
     def whisper(self, user, message):
         if self.__irc_host == config.HOST_WHISPER_120 or self.__irc_host == config.HOST_WHISPER_119:
-            self.__irc_socket.send("PRIVMSG #jtv :/w {0} {1} \r\n".format(user, message).encode("utf-8"))
+            self.__irc_socket.send("PRIVMSG #jtv :/w {0} {1} \r\n".format(user, message))
         else:
             print("You are not connected to the Group Chat Servers! Please connect first to {0} or {1}.".format(config.HOST_WHISPER_120,config.HOST_WHISPER_119))
 
     def pong(self):
-        self.__irc_socket.send("PONG :tmi.twitch.tv\r\n".encode("utf-8"))
+        self.__irc_socket.send("PONG :tmi.twitch.tv\r\n")
 
     def receive(self, bit):
-        response = self.__irc_socket.recv(bit).decode("utf-8")
+        response = self.__irc_socket.recv(bit)
         return response
 
     def timeout(self, user, secs):
-        print("geht das?")
         self.chat(".timeout {0} {1}".format(user, secs))
 
     def ban(self, user):

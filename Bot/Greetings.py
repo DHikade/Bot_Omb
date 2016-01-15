@@ -57,15 +57,16 @@ class Greetings(threading.Thread):
     def run(self):
         while self.__active:
             time.sleep(self.__interval)
-            if self.__active:
-                users = self.__api.getTMI_Chatters_Users()
-                if users is not None:
-                    greet = []
-                    for i in range(len(users)):
-                        if [users[i]] not in self.__greeted:
-                            greet.append(users[i])
-                    if len(greet) > 0:
-                        self.__greet(greet)    
+            if self.__api.getKraken_isOnline():
+                if self.__active:
+                    users = self.__api.getTMI_Chatters_Users()
+                    if users is not None:
+                        greet = []
+                        for i in range(len(users)):
+                            if [users[i]] not in self.__greeted:
+                                greet.append(users[i])
+                        if len(greet) > 0:
+                            self.__greet(greet)    
 
     def __save(self, file_name, data):
         file_save = open(config.PATH+"channel/"+self.__name+"/"+file_name, 'w')

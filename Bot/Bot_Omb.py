@@ -39,6 +39,7 @@ from Greetings import Greetings
 from Newtimenowapi import Newtimenowapi
 from TwitchAPI import TwitchAPI
 from Language import Language
+from Bank import Bank
 import eCommand
 import eSetting
 import eUser
@@ -63,7 +64,7 @@ class Bot_Omb(threading.Thread):
                 announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
                 announcement_thread.setName(key[eAnnouncement.ident])
                 announcements.append(announcement_thread)
-            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None}
+            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "ranks" : self.__load("channel/"+chat_channel[i]+"/ranks.csv"), "whitelist" : self.__load("channel/"+chat_channel[i]+"/whitelist.csv"),"bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None, "bank" : Bank(chat_channel[i], self.__channel, self.__whisper)}
             self.__chat_channel[chat_channel[i]]["language"] = Language(self.__get_element('language_chat', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state])
             if self.__string_to_bool(self.__get_element('greetings', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
                 self.__chat_channel[chat_channel[i]]["greetings"] = Greetings(self.__chat_channel[chat_channel[i]]['language'], chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]))
@@ -93,7 +94,11 @@ class Bot_Omb(threading.Thread):
                     self.__smm_submits = self.__chat_channel[self.__channel_name]['smm_submits']
                     self.__poll = self.__chat_channel[self.__channel_name]['poll']
                     self.__greetings = self.__chat_channel[self.__channel_name]['greetings']
+                    self.__ranks = self.__chat_channel[self.__channel_name]['ranks']
+                    self.__bank = self.__chat_channel[self.__channel_name]['bank']
+                    self.__whitelist = self.__chat_channel[self.__channel_name]['whitelist']
                     self.__languages = {"obj" : self.__chat_channel[self.__channel_name]['language'], "lan" : self.__chat_channel[self.__channel_name]['language'].get_Languages()}
+                    self.__bank.set_Language(self.__languages)
                 elif channel is None:
                     print("No channel was found!")
                     channel = "Twitch_channel"
@@ -111,7 +116,8 @@ class Bot_Omb(threading.Thread):
                     message = message[:len(message)-2]
                     actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
                     output = actual_time + " - " + username + "@" + self.__channel_name + ": " + message
-                    print(output.encode('utf-8'))
+                    print(output)
+
                     self.__warning(username, message)
                     self.__command(username, message)
                     self.__help(username, message, int(self.__get_element('help', self.__settings)[eSetting.state]))
@@ -141,9 +147,23 @@ class Bot_Omb(threading.Thread):
                     self.__smm_level_next(username, message, int(self.__get_element('smm_level_next', self.__settings)[eSetting.state]))
                     self.__poll_start(username, message, int(self.__get_element('poll_start', self.__settings)[eSetting.state]))
                     self.__poll_vote(username, message, int(self.__get_element('poll_vote', self.__settings)[eSetting.state]))
+                    self.__poll_vote_hashtag(username, message, int(self.__get_element('poll_vote', self.__settings)[eSetting.state]))
                     self.__poll_result(username, message, int(self.__get_element('poll_result', self.__settings)[eSetting.state]))
                     self.__language(username, message, int(self.__get_element('language', self.__settings)[eSetting.state]))
                     self.__upsince(username, message, int(self.__get_element('upsince', self.__settings)[eSetting.state]))
+                    self.__rank_add(username, message, int(self.__get_element('rank_add', self.__settings)[eSetting.state]))
+                    self.__rank_remove(username, message, int(self.__get_element('rank_remove', self.__settings)[eSetting.state]))
+                    self.__rank_show(username, message, int(self.__get_element('rank_show', self.__settings)[eSetting.state]))
+                    self.__rank_show_me(username, message, int(self.__get_element('rank_show_me', self.__settings)[eSetting.state]))
+                    self.__bank_robbery(username, message, int(self.__get_element('bank_robbery', self.__settings)[eSetting.state]))
+                    self.__bank_spy(username, message, int(self.__get_element('bank_spy', self.__settings)[eSetting.state]))
+                    self.__bank_robbery_flee(username, message, int(self.__get_element('bank_robbery_flee', self.__settings)[eSetting.state]))
+                    self.__bank_guard_add(username, message, int(self.__get_element('bank_guard_add', self.__settings)[eSetting.state]))
+                    self.__bank_guard_remove(username, message, int(self.__get_element('bank_guard_remove', self.__settings)[eSetting.state]))
+                    self.__bank_guard_show(username, message, int(self.__get_element('bank_guard_show', self.__settings)[eSetting.state]))
+                    self.__whitelist_add(username, message, int(self.__get_element('whitelist_add', self.__settings)[eSetting.state]))
+                    self.__whitelist_remove(username, message, int(self.__get_element('whitelist_remove', self.__settings)[eSetting.state]))
+                    self.__whitelist_show(username, message, int(self.__get_element('whitelist_show', self.__settings)[eSetting.state]))
                     time.sleep(config.RATE)
         print("Thread: {0} shutdown".format(self.__channel_name))
         
@@ -171,6 +191,209 @@ class Bot_Omb(threading.Thread):
                         self.__channel.chat(self.__languages["lan"]["language_later"])
                 else:
                     self.__channel.chat(self.__languages["lan"]["language_switch_fail"].format(language))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __whitelist_add(self, username, message, privileges):
+        if regex.REG_WHITELIST_ADD.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                name = message[message.rfind(' ')+1:len(message)]
+                self.__whitelist.append([name])
+                self.__save("whitelist.csv", self.__whitelist)
+                self.__whisper.whisper(username, self.__languages["lan"]["whitelist_add"].format(name))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __whitelist_remove(self, username, message, privileges):
+        if regex.REG_WHITELIST_REMOVE.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                name = message[message.rfind(' ')+1:len(message)]
+                whitelist_elem = self.__get_element(name, self.__whitelist)
+                if whitelist_elem is not None:
+                    self.__whitelist.remove(whitelist_elem)
+                    self.__save("whitelist.csv", self.__whitelist)
+                    self.__whisper.whisper(username, self.__languages["lan"]["whitelist_remove"].format(name))
+                else:
+                    self.__whisper.whisper(username, self.__languages["lan"]["whitelist_remove_fail"].format(name))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __whitelist_show(self, username, message, privileges):
+        if message == "!whitelists":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                self.__channel.chat(self.__languages["lan"]["whitelist_show"].format(str(self.__whitelist)))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __bank_robbery(self, username, message, privileges):
+        if message == "!bank robbery":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                if not self.__bank.isAlive():
+                    self.__bank.setDaemon(True)
+                    self.__bank.start()
+                self.__bank.robbery(username)
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __bank_spy(self, username, message, privileges):
+        if message == "!bank spy":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                if not self.__bank.isAlive():
+                    self.__bank.setDaemon(True)
+                    self.__bank.start()
+                self.__bank.spy(username)
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __bank_robbery_flee(self, username, message, privileges):
+        if message == "!bank robbery flee":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                if not self.__bank.isAlive():
+                    self.__bank.setDaemon(True)
+                    self.__bank.start()
+                self.__bank.flee(username)
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __bank_guard_add(self, username, message, privileges):
+        if regex.REG_BANK_GUARD_ADD.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                self.__bank.guard_add(username, message)
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __bank_guard_remove(self, username, message, privileges):
+        if regex.REG_BANK_GUARD_REMOVE.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                self.__bank.guard_remove(username, message)
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __bank_guard_show(self, username, message, privileges):
+        if message == "!bank guards":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                self.__bank.guard_show(message)
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __rank_add(self, username, message, privileges):
+        if regex.REG_RANK_ADD.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                rank_priv = message[message.rfind(" ")+1 : len(message)]
+                message = message[0 : message.rfind(" ")]
+                rank_name = message[message.rfind(" ")+1 : len(message)].lower()
+                
+                if int(rank_priv) >= 0 and int(rank_priv) <= 99:
+                    if self.__update(rank_name, [None, rank_priv], self.__ranks):
+                        self.__channel.chat(self.__languages["lan"]["rank_add_update"].format(rank_name, rank_priv))
+                    else:
+                        self.__ranks.append([rank_name, rank_priv])
+                        output = self.__languages["lan"]["rank_add_append"]
+                        output = output.format(rank_name, rank_priv)
+                        self.__channel.chat(output)
+                    self.__save("ranks.csv", self.__ranks)
+                else:
+                    self.__channel.chat(self.__languages["lan"]["rank_add_range"])
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __rank_remove(self, username, message, privileges):
+        if regex.REG_RANK_REMOVE.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                rank_name = message[message.rfind(" ")+1 : len(message)]
+                rank_elem = self.__get_element(rank_name, self.__ranks)
+                if rank_elem is not None:
+                    self.__ranks.remove(rank_elem)
+                    self.__save("ranks.csv", self.__ranks)
+                    self.__channel.chat(self.__languages["lan"]["rank_remove"].format(rank_name))
+                else:
+                    self.__channel.chat(self.__languages["lan"]["rank_remove_fail"].format(rank_name))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __rank_show(self, username, message, privileges):
+        if message == "!ranks":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+               self.__channel.chat(self.__languages["lan"]["rank_show"].format(str(self.__ranks)))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __rank_show_me(self, username, message, privileges):
+        if message == "!rank me":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                rank_list = []
+                for rank in self.__ranks:
+                    if int(rank[1]) == int(user_privileges):
+                        rank_list.append(rank[0])
+                if len(rank_list) == 0:
+                    self.__whisper.whisper(username, self.__languages["lan"]["rank_me_privileges"].format(str(user_privileges)))
+                else:
+                    self.__whisper.whisper(username, self.__languages["lan"]["rank_me"].format(str(rank_list)))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -224,6 +447,23 @@ class Bot_Omb(threading.Thread):
             if user_privileges >= privileges:
                 if self.__poll is not None and self.__poll.isActive():
                     poll_vote = message[message.find(" ")+1 : len(message)]
+                    poll_text = self.__poll.vote(username, poll_vote)
+                    self.__whisper.whisper(username, poll_text)
+                else:
+                    self.__whisper.whisper(username, self.__languages["lan"]["poll_progress_off"])
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __poll_vote_hashtag(self, username, message, privileges):
+        if regex.REG_POLL_VOTE_HASHTAG.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                if self.__poll is not None and self.__poll.isActive():
+                    poll_vote = message[1 : len(message)]
                     poll_text = self.__poll.vote(username, poll_vote)
                     self.__whisper.whisper(username, poll_text)
                 else:
@@ -330,7 +570,8 @@ class Bot_Omb(threading.Thread):
     def __sortSMM(self):
         sorted_smm_submits = []
         smm_submits = copy.deepcopy(self.__smm_submits)
-        while len(sorted_smm_submits) != len(smm_submits):
+        smm_submits_len = len(smm_submits)
+        while len(sorted_smm_submits) != smm_submits_len:
             value_high = float("inf")
             user_high = None
             keys = smm_submits.keys()
@@ -340,6 +581,7 @@ class Bot_Omb(threading.Thread):
                     user_high = keys[i]
             smm_submits[user_high].pop("id", None)
             sorted_smm_submits.append(smm_submits[user_high])
+            smm_submits.pop(user_high, None)
         return sorted_smm_submits
 
     def __sortSMMNext(self):
@@ -503,7 +745,7 @@ class Bot_Omb(threading.Thread):
             else:
                 user_privileges = 0
             if user_privileges >= privileges:
-                api = Newtimenowapi(self.__channel_name)
+                api = Newtimenowapi(self.__channel_name[1:])
                 date = str(api.getNewTimeNow_Follow_Since(username))
                 if re.match("Not following...", date):
                     self.__channel.chat(self.__languages["lan"]["follow_member_not"].format(username))
@@ -723,15 +965,28 @@ class Bot_Omb(threading.Thread):
             else:
                 user_privileges = 0
             if user_privileges >= privileges:
-                priv_name = message[message.find(' ')+1: message.rfind(' ')]
-                priv_priv = int(message[message.rfind(' ')+1:len(message)])
-                if priv_priv > 99 or priv_priv < 0:
-                    self.__channel.chat(self.__languages["lan"]["privileges_range"])
+                priv_name = message[message.find(' ')+1: message.rfind(' ')].lower()
+                priv_priv = message[message.rfind(' ')+1:len(message)]
+                priv_num = priv_priv
+                priv_check = True
+
+                if not self.__isNumber(priv_num):
+                    priv_elem = self.__get_element(priv_priv, self.__ranks)
+                    if priv_elem is not None:
+                        priv_num = priv_elem[1]
+                    else:
+                        priv_check = False
+
+                if priv_check:
+                    if int(priv_num) > 99 or int(priv_num) < 0:
+                        self.__channel.chat(self.__languages["lan"]["privileges_range"])
+                    else:
+                        self.__update(priv_name, [None, priv_priv, None, None, None, None, None], self.__users)
+                        self.__save("users.csv", self.__users)
+                        self.__whisper.whisper(username, self.__languages["lan"]["privileges_assign"].format(priv_name, username, str(priv_priv)))
+                        self.__whisper.whisper(priv_name, self.__languages["lan"]["privileges_assign_msg"].format(str(priv_priv)))
                 else:
-                    self.__update(priv_name, [None, priv_priv, None, None, None, None, None], self.__users)
-                    self.__save("users.csv", self.__users)
-                    self.__whisper.whisper(username, self.__languages["lan"]["privileges_assign"].format(priv_name, username, str(priv_priv)))
-                    self.__whisper.whisper(priv_name, self.__languages["lan"]["privileges_assign_msg"].format(str(priv_priv)))
+                    self.__whisper.whisper(username, self.__languages["lan"]["privileges_rank_fail"].format(str(priv_priv)))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -940,22 +1195,24 @@ class Bot_Omb(threading.Thread):
         return True
 
     def __warning(self, username, message):
-        if self.__warning_url(username, message) or self.__warning_caps(username, message) or self.__warning_long_text(username, message):
-            user = self.__get_element(username, self.__users)
-            if user is not None:
-                user_warnings = int(user[eUser.warnings])
-                user_warnings_date = int(user[eUser.warnings_date])
-            else:
-                user_warnings = 0
-            if user_warnings > 0:
-                weeks_since_last_warning = int((int(round(time.time())) - user_warnings_date) / 604800)
-                if user_warnings > weeks_since_last_warning:
-                    user_warnings -= (weeks_since_last_warning-1)
-            else:
-                user_warnings = 1
-            user_warnings_date = int(round(time.time()))
-            self.__update(username, [None, None, None, None, user_warnings, user_warnings_date, None, None], self.__users)
-            self.__save("users.csv", self.__users)
+        whitelist_user =  self.__get_element(username, self.__whitelist)
+        if whitelist_user is not None:
+            if self.__warning_url(username, message) or self.__warning_caps(username, message) or self.__warning_long_text(username, message):
+                user = self.__get_element(username, self.__users)
+                if user is not None:
+                    user_warnings = int(user[eUser.warnings])
+                    user_warnings_date = int(user[eUser.warnings_date])
+                else:
+                    user_warnings = 0
+                if user_warnings > 0:
+                    weeks_since_last_warning = int((int(round(time.time())) - user_warnings_date) / 604800)
+                    if user_warnings > weeks_since_last_warning:
+                        user_warnings -= (weeks_since_last_warning-1)
+                else:
+                    user_warnings = 1
+                user_warnings_date = int(round(time.time()))
+                self.__update(username, [None, None, None, None, user_warnings, user_warnings_date, None, None], self.__users)
+                self.__save("users.csv", self.__users)
 
     def __help(self, username, message, privileges):
         if message == '!help':

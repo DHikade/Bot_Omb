@@ -68,6 +68,15 @@ class Poll(threading.Thread):
 
     def vote(self, username, poll_vote):
         if self.__poll_allow:
+            if not self.__isNumber(poll_vote):
+                check = True
+                for i in range(len(self.__poll_option)):                    
+                    if self.__poll_option[i].keys()[0].lower().replace(" ", "") == poll_vote.lower().replace(" ", ""):
+                        poll_vote = i
+                        check = False
+                        break
+                if check:
+                    poll_vote = len(self.__poll_option)
             if int(poll_vote) < len(self.__poll_option):
                 self.__poll_user_list[username] = int(poll_vote)
                 return self.__language["poll_vote"]
@@ -99,6 +108,13 @@ class Poll(threading.Thread):
 
     def result(self):
         self.__channel.chat(self.__win_message)
+
+    def __isNumber(self, value):
+        try:
+            int(value)
+            return True
+        except ValueError:
+            return False
 
     def finish(self):
         self.__active = False

@@ -54,14 +54,17 @@ class Twitter(threading.Thread):
             if channels is not None:
                 for channel in channels["stream"]:
                     if channel not in self.__channel_status:
-                        self.__channel_status[channel] = False
+                        self.__channel_status[channel] = {"online" : False, "time" : 0}
                     self.__api_Twitch.setChannel(channel)
-                
-                    if self.__api_Twitch.getKraken_isOnline():
-                        if not self.__channel_status[channel]:
-                            self.__channel_status[channel] = True
-                            output = channel + " " + random.choice(self.__status).decode("utf-8") + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
-                            self.__api_Twitter.update_status(status=output)
-                    else:
-                        self.__channel_status[channel] = False
+                    actual_time = time.time()
+                    if (actual_time - self.__channel_status[channel]["time"]) > 900:
+                        if self.__api_Twitch.getKraken_isOnline():
+                            if not self.__channel_status[channel]["online"]:
+                                self.__channel_status[channel]["online"] = True
+                                self.__channel_status[channel]["time"] = time.time()
+                                output = channel + " " + random.choice(self.__status).decode("utf-8") + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
+                                self.__api_Twitter.update_status(status=output)
+                        else:
+                            self.__channel_status[channel]["online"] = False
+                            self.__channel_status[channel]["time"] = 0
             time.sleep(60)
