@@ -64,12 +64,15 @@ class Bot_Omb(threading.Thread):
                 announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
                 announcement_thread.setName(key[eAnnouncement.ident])
                 announcements.append(announcement_thread)
-            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "ranks" : self.__load("channel/"+chat_channel[i]+"/ranks.csv"), "whitelist" : self.__load("channel/"+chat_channel[i]+"/whitelist.csv"),"bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None, "bank" : Bank(chat_channel[i], self.__channel, self.__whisper)}
+            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "ranks" : self.__load("channel/"+chat_channel[i]+"/ranks.csv"), "whitelist" : self.__load("channel/"+chat_channel[i]+"/whitelist.csv"),"bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None, "bank" : None}
             self.__chat_channel[chat_channel[i]]["language"] = Language(self.__get_element('language_chat', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state])
+            if self.__string_to_bool(self.__get_element('bank_mode', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
+                self.__chat_channel[chat_channel[i]]["bank"] = Bank(chat_channel[i], self.__channel, self.__whisper)
             if self.__string_to_bool(self.__get_element('greetings', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
                 self.__chat_channel[chat_channel[i]]["greetings"] = Greetings(self.__chat_channel[chat_channel[i]]['language'], chat_channel[i], self.__channel, self.__load("channel/"+chat_channel[i]+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]))
-            for key in announcements:
-                key.start()
+            if self.__string_to_bool(self.__get_element('announce_mode', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
+                for key in announcements:
+                    key.start()
 
     def run(self):
         print("Thread: {0} started".format(self.__chat_channel))
@@ -120,50 +123,69 @@ class Bot_Omb(threading.Thread):
 
                     self.__warning(username, message)
                     self.__command(username, message)
-                    self.__help(username, message, int(self.__get_element('help', self.__settings)[eSetting.state]))
-                    self.__coins(username, message, int(self.__get_element('coins', self.__settings)[eSetting.state]))
-                    self.__command_add(username, message, int(self.__get_element('command_add', self.__settings)[eSetting.state]))
-                    self.__command_remove(username, message, int(self.__get_element('command_remove', self.__settings)[eSetting.state]))
-                    self.__command_show(username, message, int(self.__get_element('command_show', self.__settings)[eSetting.state]))
+                    self.__language(username, message, int(self.__get_element('language', self.__settings)[eSetting.state]))
+                    self.__upsince(username, message, int(self.__get_element('upsince', self.__settings)[eSetting.state]))
+                    self.__unfollow(username, message, int(self.__get_element('unfollow', self.__settings)[eSetting.state]))
+                    self.__info(username, message, int(self.__get_element('info', self.__settings)[eSetting.state]))
+                    self.__follow(username, message, int(self.__get_element('follow', self.__settings)[eSetting.state]))
                     self.__privileges(username, message, int(self.__get_element('privileges', self.__settings)[eSetting.state]))
                     self.__setting(username, message, int(self.__get_element('setting', self.__settings)[eSetting.state]))
                     self.__setting_show(username, message, int(self.__get_element('setting_show', self.__settings)[eSetting.state]))
                     self.__url(username, message, int(self.__get_element('url', self.__settings)[eSetting.state]))
-                    self.__bet_start(username, message, int(self.__get_element('bet_start', self.__settings)[eSetting.state]))
-                    self.__bet(username, message, int(self.__get_element('bet', self.__settings)[eSetting.state]))
-                    self.__bet_stop(username, message, int(self.__get_element('bet_stop', self.__settings)[eSetting.state]))
-                    self.__bet_reset(username, message, int(self.__get_element('bet_reset', self.__settings)[eSetting.state]))
-                    self.__follow(username, message, int(self.__get_element('follow', self.__settings)[eSetting.state]))
-                    self.__follow_member(username, message, int(self.__get_element('follow_member', self.__settings)[eSetting.state]))
-                    self.__follow_member_other(username, message, int(self.__get_element('follow_member_other', self.__settings)[eSetting.state]))
-                    self.__unfollow(username, message, int(self.__get_element('unfollow', self.__settings)[eSetting.state]))
-                    self.__info(username, message, int(self.__get_element('info', self.__settings)[eSetting.state]))
-                    self.__announce_add(username, message, int(self.__get_element('announce_add', self.__settings)[eSetting.state]))
-                    self.__announce_remove(username, message, int(self.__get_element('announce_remove', self.__settings)[eSetting.state]))
-                    self.__announce_show(username, message, int(self.__get_element('announce_show', self.__settings)[eSetting.state]))
-                    self.__smm_level_submit(username, message, int(self.__get_element('smm_level_submit', self.__settings)[eSetting.state]))
-                    self.__smm_level_submit_other(username, message, int(self.__get_element('smm_level_submit_other', self.__settings)[eSetting.state]))
-                    self.__smm_level_show(username, message, int(self.__get_element('smm_level_show', self.__settings)[eSetting.state]))
-                    self.__smm_level_next(username, message, int(self.__get_element('smm_level_next', self.__settings)[eSetting.state]))
-                    self.__poll_start(username, message, int(self.__get_element('poll_start', self.__settings)[eSetting.state]))
-                    self.__poll_vote(username, message, int(self.__get_element('poll_vote', self.__settings)[eSetting.state]))
-                    self.__poll_vote_hashtag(username, message, int(self.__get_element('poll_vote', self.__settings)[eSetting.state]))
-                    self.__poll_result(username, message, int(self.__get_element('poll_result', self.__settings)[eSetting.state]))
-                    self.__language(username, message, int(self.__get_element('language', self.__settings)[eSetting.state]))
-                    self.__upsince(username, message, int(self.__get_element('upsince', self.__settings)[eSetting.state]))
-                    self.__rank_add(username, message, int(self.__get_element('rank_add', self.__settings)[eSetting.state]))
-                    self.__rank_remove(username, message, int(self.__get_element('rank_remove', self.__settings)[eSetting.state]))
-                    self.__rank_show(username, message, int(self.__get_element('rank_show', self.__settings)[eSetting.state]))
-                    self.__rank_show_me(username, message, int(self.__get_element('rank_show_me', self.__settings)[eSetting.state]))
-                    self.__bank_robbery(username, message, int(self.__get_element('bank_robbery', self.__settings)[eSetting.state]))
-                    self.__bank_spy(username, message, int(self.__get_element('bank_spy', self.__settings)[eSetting.state]))
-                    self.__bank_robbery_flee(username, message, int(self.__get_element('bank_robbery_flee', self.__settings)[eSetting.state]))
-                    self.__bank_guard_add(username, message, int(self.__get_element('bank_guard_add', self.__settings)[eSetting.state]))
-                    self.__bank_guard_remove(username, message, int(self.__get_element('bank_guard_remove', self.__settings)[eSetting.state]))
-                    self.__bank_guard_show(username, message, int(self.__get_element('bank_guard_show', self.__settings)[eSetting.state]))
-                    self.__whitelist_add(username, message, int(self.__get_element('whitelist_add', self.__settings)[eSetting.state]))
-                    self.__whitelist_remove(username, message, int(self.__get_element('whitelist_remove', self.__settings)[eSetting.state]))
-                    self.__whitelist_show(username, message, int(self.__get_element('whitelist_show', self.__settings)[eSetting.state]))
+                    self.__help(username, message, int(self.__get_element('help', self.__settings)[eSetting.state]))
+                    self.__coins(username, message, int(self.__get_element('coins', self.__settings)[eSetting.state]))
+                    
+                    if self.__string_to_bool(self.__get_element('command_mode', self.__settings)[eSetting.state]):
+                        self.__command_add(username, message, int(self.__get_element('command_add', self.__settings)[eSetting.state]))
+                        self.__command_remove(username, message, int(self.__get_element('command_remove', self.__settings)[eSetting.state]))
+                        self.__command_show(username, message, int(self.__get_element('command_show', self.__settings)[eSetting.state]))
+                    
+                    if self.__string_to_bool(self.__get_element('bet_mode', self.__settings)[eSetting.state]):
+                        self.__bet_start(username, message, int(self.__get_element('bet_start', self.__settings)[eSetting.state]))
+                        self.__bet(username, message, int(self.__get_element('bet', self.__settings)[eSetting.state]))
+                        self.__bet_stop(username, message, int(self.__get_element('bet_stop', self.__settings)[eSetting.state]))
+                        self.__bet_reset(username, message, int(self.__get_element('bet_reset', self.__settings)[eSetting.state]))
+                    
+                    if self.__string_to_bool(self.__get_element('follow_mode', self.__settings)[eSetting.state]):
+                        self.__follow_member(username, message, int(self.__get_element('follow_member', self.__settings)[eSetting.state]))
+                        self.__follow_member_other(username, message, int(self.__get_element('follow_member_other', self.__settings)[eSetting.state]))
+                    
+                    if self.__string_to_bool(self.__get_element('announce_mode', self.__settings)[eSetting.state]):
+                        self.__announce_add(username, message, int(self.__get_element('announce_add', self.__settings)[eSetting.state]))
+                        self.__announce_remove(username, message, int(self.__get_element('announce_remove', self.__settings)[eSetting.state]))
+                        self.__announce_show(username, message, int(self.__get_element('announce_show', self.__settings)[eSetting.state]))
+
+                    if self.__string_to_bool(self.__get_element('smm_mode', self.__settings)[eSetting.state]):
+                        self.__smm_level_submit(username, message, int(self.__get_element('smm_level_submit', self.__settings)[eSetting.state]))
+                        self.__smm_level_submit_other(username, message, int(self.__get_element('smm_level_submit_other', self.__settings)[eSetting.state]))
+                        self.__smm_level_show(username, message, int(self.__get_element('smm_level_show', self.__settings)[eSetting.state]))
+                        self.__smm_level_next(username, message, int(self.__get_element('smm_level_next', self.__settings)[eSetting.state]))
+
+                    if self.__string_to_bool(self.__get_element('poll_mode', self.__settings)[eSetting.state]):
+                        self.__poll_start(username, message, int(self.__get_element('poll_start', self.__settings)[eSetting.state]))
+                        self.__poll_vote(username, message, int(self.__get_element('poll_vote', self.__settings)[eSetting.state]))
+                        self.__poll_vote_hashtag(username, message, int(self.__get_element('poll_vote', self.__settings)[eSetting.state]))
+                        self.__poll_result(username, message, int(self.__get_element('poll_result', self.__settings)[eSetting.state]))
+
+                    if self.__string_to_bool(self.__get_element('rank_mode', self.__settings)[eSetting.state]):
+                        self.__rank_add(username, message, int(self.__get_element('rank_add', self.__settings)[eSetting.state]))
+                        self.__rank_remove(username, message, int(self.__get_element('rank_remove', self.__settings)[eSetting.state]))
+                        self.__rank_show(username, message, int(self.__get_element('rank_show', self.__settings)[eSetting.state]))
+                        self.__rank_show_me(username, message, int(self.__get_element('rank_show_me', self.__settings)[eSetting.state]))
+
+                    if self.__string_to_bool(self.__get_element('bank_mode', self.__settings)[eSetting.state]):
+                        self.__bank_robbery(username, message, int(self.__get_element('bank_robbery', self.__settings)[eSetting.state]))
+                        self.__bank_spy(username, message, int(self.__get_element('bank_spy', self.__settings)[eSetting.state]))
+                        self.__bank_robbery_flee(username, message, int(self.__get_element('bank_robbery_flee', self.__settings)[eSetting.state]))
+                        self.__bank_guard_add(username, message, int(self.__get_element('bank_guard_add', self.__settings)[eSetting.state]))
+                        self.__bank_guard_remove(username, message, int(self.__get_element('bank_guard_remove', self.__settings)[eSetting.state]))
+                        self.__bank_guard_show(username, message, int(self.__get_element('bank_guard_show', self.__settings)[eSetting.state]))
+
+                    if self.__string_to_bool(self.__get_element('whitelist_mode', self.__settings)[eSetting.state]):
+                        self.__whitelist_add(username, message, int(self.__get_element('whitelist_add', self.__settings)[eSetting.state]))
+                        self.__whitelist_remove(username, message, int(self.__get_element('whitelist_remove', self.__settings)[eSetting.state]))
+                        self.__whitelist_show(username, message, int(self.__get_element('whitelist_show', self.__settings)[eSetting.state]))
+
                     time.sleep(config.RATE)
         print("Thread: {0} shutdown".format(self.__channel_name))
         
@@ -924,20 +946,48 @@ class Bot_Omb(threading.Thread):
                     setting_state = message[message.rfind(' ')+1:len(message)]
                     if setting_state == "on" or setting_state == "off":
                         if setting_state == "on":
-                            self.__update(setting_name, [None, True], self.__settings)
                             if setting_name == "greetings" and self.__greetings is None:
                                 self.__greetings = Greetings(self.__languages["obj"], self.__channel_name, self.__channel, self.__load("channel/"+self.__channel_name+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__settings)[eSetting.state]))
                                 self.__chat_channel[self.__channel_name]['greetings'] = self.__greetings
+                            if setting_name == "announce_mode" and not self.__string_to_bool(self.__get_element('announce_mode', self.__settings)[eSetting.state]):
+                                announce = self.__load("channel/"+chat_channel[i]+"/announcements.csv")
+                                announcements = []
+                                for key in announce:
+                                    announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
+                                    announcement_thread.setName(key[eAnnouncement.ident])
+                                    announcements.append(announcement_thread)
+                                self.__announcements = announcements
+                                self.__chat_channel[self.__channel_name]['announcements'] = self.__announcements
+                                self.__announcelist = announce
+                                self.__chat_channel[self.__channel_name]['announcelist'] = self.__announcelist
+                                for key in announcements:
+                                    key.start()
+                            if setting_name == "bank_mode" and not self.__string_to_bool(self.__get_element('bank_mode', self.__settings)[eSetting.state]): 
+                                self.__bank = Bank(chat_channel[i], self.__channel, self.__whisper)
+                                self.__chat_channel[chat_channel[i]]["bank"] = self.__bank
+                            self.__update(setting_name, [None, True], self.__settings)
                         elif setting_state == "off":
-                            self.__update(setting_name, [None, False], self.__settings)
                             if setting_name == "greetings" and self.__greetings is not None:
-                                if hasattr(self.__greetings, "_tstate_lock"):
-                                    if hasattr(self.__greetings._tstate_lock, "release"):
-                                        self.__greetings._tstate_lock.release()
                                 self.__greetings.finish()
                                 self.__greetings = None
                                 self.__chat_channel[self.__channel_name]['greetings'] = self.__greetings
-                    elif setting_name != "warning_url" and setting_name != "warning_caps" and setting_name != "warning_long_text" and setting_name != "greetings":
+                            if setting_name == "bet_mode" and self.__bets is not None and self.__string_to_bool(self.__get_element('bet_mode', self.__settings)[eSetting.state]):
+                                self.__bet_reset(username, "!reset")
+                                self.__bets == None
+                                self.__chat_channel[self.__channel_name]['bets'] = self.__bets
+                            if setting_name == "announce_mode" and self.__string_to_bool(self.__get_element('announce_mode', self.__settings)[eSetting.state]):
+                                for key in self.__announcements:
+                                    key.finish()
+                            if setting_name == "bank_mode" and self.__string_to_bool(self.__get_element('bank_mode', self.__settings)[eSetting.state]): 
+                                self.__bank.finish()
+                                self.__bank = None
+                                self.__chat_channel[chat_channel[i]]["bank"] = None
+                            if setting_name == "poll_mode" and self.__string_to_bool(self.__get_element('poll_mode', self.__settings)[eSetting.state]):
+                                self.__poll.finish()
+                                self.__poll = None
+                                self.__chat_channel[self.__channel_name]['poll'] = self.__poll
+                            self.__update(setting_name, [None, False], self.__settings)
+                    elif setting_name != "warning_url" and setting_name != "warning_caps" and setting_name != "warning_long_text" and setting_name != "greetings" and setting_name != "command_mode" and setting_name != "bet_mode" and setting_name != "follow_mode" and setting_name != "announce_mode" and setting_name != "smm_mode" and setting_name != "poll_mode" and setting_name != "rank_mode" and setting_name != "bank_mode" and setting_name != "whitelist_mode":
                         if self.__isNumber(setting_state):
                             if int(setting_state) >= 0 and int(setting_state) <= 99:
                                 self.__update(setting_name, [None, int(setting_state)], self.__settings)

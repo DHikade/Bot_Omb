@@ -48,17 +48,23 @@ class Bank(threading.Thread):
         self.__vault = random.randint(100, 500)
         self.__languages = None
 
+    def finish(self):
+        self.__active = False
+        if self.__robbery is not None:
+            self.__robbery.finish()
+
     def set_Language(self, language):
         self.__languages = language
 
     def run(self):
         while self.__active:
             time.sleep(1200)
-            self.__guards_working = random.sample(self.__guards, random.randint(1,3))
-            self.__vault = random.randint(100, 500)
-            self.__robbery.vault(self.__vault)
-            self.__robbery.guards(self.__guards_working)
-            self.__robbery.spy(self.__spy_attempts)
+            if self.__active:
+                self.__guards_working = random.sample(self.__guards, random.randint(1,3))
+                self.__vault = random.randint(100, 500)
+                self.__robbery.vault(self.__vault)
+                self.__robbery.guards(self.__guards_working)
+                self.__robbery.spy(self.__spy_attempts)
 
     def robbery(self, username):
         if self.__robbery is None:

@@ -49,22 +49,23 @@ class Robbery(threading.Thread):
             self.__channel.chat(self.__languages["lan"]["robbery_started"])
             time.sleep(180)
             self.__robbery = False
-            self.__channel.chat(self.__languages["lan"]["robbery_finished"])
-            thieves_caught = []
-            for guard in self.__guards:
-                thieves_discovered = []
-                for thief in self.__thieves:
-                    if thief not in thieves_caught:
-                        if random.randint(1,100) <= int(guard[1]):
-                            thieves_discovered.append(thief)
-                for thief in thieves_discovered:
-                    if random.randint(1,100) <= int(int(guard[1])/2):
-                        thieves_caught.append(thief)
-            if len(self.__thieves) == 0:
-                self.__channel.chat(self.__languages["lan"]["robbery_cancel"])
-            else:
-                self.__channel.chat(self.__languages["lan"]["robbery"].format(str(len(thieves_discovered)), str(len(thieves_caught))))
-            self.finish()
+            if self.__active:
+                self.__channel.chat(self.__languages["lan"]["robbery_finished"])
+                thieves_caught = []
+                for guard in self.__guards:
+                    thieves_discovered = []
+                    for thief in self.__thieves:
+                        if thief not in thieves_caught:
+                            if random.randint(1,100) <= int(guard[1]):
+                                thieves_discovered.append(thief)
+                    for thief in thieves_discovered:
+                        if random.randint(1,100) <= int(int(guard[1])/2):
+                            thieves_caught.append(thief)
+                if len(self.__thieves) == 0:
+                    self.__channel.chat(self.__languages["lan"]["robbery_cancel"])
+                else:
+                    self.__channel.chat(self.__languages["lan"]["robbery"].format(str(len(thieves_discovered)), str(len(thieves_caught))))
+                self.finish()
 
     def robbery(self, username):
         if username not in self.__thieves:

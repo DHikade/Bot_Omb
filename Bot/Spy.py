@@ -58,7 +58,7 @@ class Spy(threading.Thread):
                 self.__whisper.whisper(self.__username, self.__languages["lan"]["spy_success"].format(len(self.__guards), str(vault_spied)))
             else:
                 self.__whisper.whisper(self.__username, self.__languages["lan"]["spy_fail"])
-            self.__active = False
+            self.finish()
 
     def get_Username(self):
         return self.__username
