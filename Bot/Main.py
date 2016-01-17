@@ -90,6 +90,10 @@ def shutdown(bot_thread):
             bot_thread.get_Channel()[j]['greetings'].finish()
         if bot_thread.get_Channel()[j]['poll'] is not None:
             bot_thread.get_Channel()[j]['poll'].finish()
+        if bot_thread.get_Channel()[j]['watchtime'] is not None:
+            bot_thread.get_Channel()[j]['watchtime'].finish()
+        if bot_thread.get_Channel()[j]['bank'] is not None:
+            bot_thread.get_Channel()[j]['bank'].finish()
         for announcement in bot_thread.get_Channel()[j]['announcements']:
             announcement.finish()
     bot_thread.finish()
@@ -122,7 +126,7 @@ def follow(username, message, privileges):
                     greetings_file.write("")
                     greetings_file.close()
                     settings_file = open(config.PATH+"channel/"+"#"+username+"/"+"settings.csv", "w")
-                    settings_file.write("language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\ncommand_mode;True\nbet_mode;True\nfollow_mode;True\nannounce_mode;True\nsmm_mode;True\npoll_mode;True\nrank_mode;True\nbank_mode;True\nwhitelist_mode;True\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\nupsince;0\nrank_add;99\nrank_remove;99\nrank_show;99\nrank_show_me;0\nbank_robbery;99\nbank_spy;99\nbank_robbery_flee;99\nbank_guard_add;99\nbank_guard_remove;99\nbank_guard_show;99\nwhitelist_add;99\nwhitelist_remove;99\nwhitelist_show;99\n")
+                    settings_file.write("language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\ncommand_mode;True\nbet_mode;True\nfollow_mode;True\nannounce_mode;True\nsmm_mode;True\npoll_mode;True\nrank_mode;True\nbank_mode;True\nwhitelist_mode;True\nwatchtime_mode;False\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\nupsince;0\nrank_add;99\nrank_remove;99\nrank_show;99\nrank_show_me;0\nbank_robbery;99\nbank_spy;99\nbank_robbery_flee;99\nbank_guard_add;99\nbank_guard_remove;99\nbank_guard_show;99\nwhitelist_add;99\nwhitelist_remove;99\nwhitelist_show;99\n")
                     settings_file.close()
                     users_file = open(config.PATH+"channel/"+"#"+username+"/"+"users.csv", "w")
                     users_file.write(username+";100;100;False;0;0;0\n")
@@ -317,11 +321,9 @@ if __name__ == '__main__':
             if not regex.REG_LOGIN.match(message) and username != 'bot_omb':
                 message = message[:len(message)-2]
                 actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
-                try:
-                    output = actual_time + " - " + username + "@" + main_name + ": " + message
-                    print(output.encode('utf-8'))
-                except:
-                    print("Nothing to print")
+                output = actual_time + " - " + username + "@" + main_name + ": " + message
+                print(output.decode('ascii', 'ignore'))
+
                 follow(username, message, 0)
                 unfollow(username, message, 0)
                 restart(username, message, 0)

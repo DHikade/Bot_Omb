@@ -40,6 +40,7 @@ from Newtimenowapi import Newtimenowapi
 from TwitchAPI import TwitchAPI
 from Language import Language
 from Bank import Bank
+from Watchtime import Watchtime
 import eCommand
 import eSetting
 import eUser
@@ -64,7 +65,7 @@ class Bot_Omb(threading.Thread):
                 announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
                 announcement_thread.setName(key[eAnnouncement.ident])
                 announcements.append(announcement_thread)
-            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "ranks" : self.__load("channel/"+chat_channel[i]+"/ranks.csv"), "whitelist" : self.__load("channel/"+chat_channel[i]+"/whitelist.csv"),"bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None, "bank" : None}
+            self.__chat_channel[chat_channel[i]] = {"users" : self.__load("channel/"+chat_channel[i]+"/users.csv"), "commands" : self.__load("channel/"+chat_channel[i]+"/commands.csv"), "settings" : self.__load("channel/"+chat_channel[i]+"/settings.csv"), "ranks" : self.__load("channel/"+chat_channel[i]+"/ranks.csv"), "whitelist" : self.__load("channel/"+chat_channel[i]+"/whitelist.csv"),"bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None, "bank" : None, "watchtime" : None}
             self.__chat_channel[chat_channel[i]]["language"] = Language(self.__get_element('language_chat', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state])
             if self.__string_to_bool(self.__get_element('bank_mode', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
                 self.__chat_channel[chat_channel[i]]["bank"] = Bank(chat_channel[i], self.__channel, self.__whisper)
@@ -73,6 +74,8 @@ class Bot_Omb(threading.Thread):
             if self.__string_to_bool(self.__get_element('announce_mode', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
                 for key in announcements:
                     key.start()
+            if self.__string_to_bool(self.__get_element('watchtime_mode', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
+                self.__chat_channel[chat_channel[i]]["watchtime"] = Watchtime(chat_channel[i])
 
     def run(self):
         print("Thread: {0} started".format(self.__chat_channel))
@@ -119,7 +122,7 @@ class Bot_Omb(threading.Thread):
                     message = message[:len(message)-2]
                     actual_time = time.strftime("%d.%m.%Y %H:%M:%S")
                     output = actual_time + " - " + username + "@" + self.__channel_name + ": " + message
-                    print(output)
+                    print(output.decode('ascii', 'ignore'))
 
                     self.__warning(username, message)
                     self.__command(username, message)
@@ -831,7 +834,7 @@ class Bot_Omb(threading.Thread):
                 bets_stop = self.__bets.stop()
                 if bets_stop["bool"]:
                     for key in self.__bets.get_bets():
-                        self.__update(key, [None, None, self.__bets.get_bets()[key]['bet_money'] - self.__bets.get_bets()[key]['bet_spent'], None, None, None, 0], self.__users)
+                        self.__update(key, [None, None, self.__bets.get_bets()[key]['bet_money'] - self.__bets.get_bets()[key]['bet_spent'], None, None, None, 0, None], self.__users)
                         self.__show(self.__users)
                         self.__save("users.csv", self.__users)
                         self.__bets = None
@@ -849,7 +852,7 @@ class Bot_Omb(threading.Thread):
                 user_privileges = 0
             if user_privileges >= privileges:
                 if self.__bets.reset():
-                    self.__update(username, [None, None, None, None, None, None, 0], self.__users)
+                    self.__update(username, [None, None, None, None, None, None, 0, None], self.__users)
                     self.__channel.chat(self.__languages["lan"]["bet_reset"])
                     self.__bets = None
                     self.__chat_channel[self.__channel_name]['bets'] = self.__bets
@@ -883,13 +886,13 @@ class Bot_Omb(threading.Thread):
                         bet_sec = int(message[message.find(':')+1:message.rfind(' ')])
                         if not self.__bet_same_time(username, bet_min*60+bet_sec):
                             if self.__bets.bet(username, user_money, bet_spent, bet_hour, bet_min, bet_sec):
-                                self.__update(username, [None, None, None, None, None, None, bet_spent], self.__users)
+                                self.__update(username, [None, None, None, None, None, None, bet_spent, None], self.__users)
                                 self.__whisper.whisper(username, self.__languages["lan"]["bet_accept"].format(username))
                                 self.__save("users.csv", self.__users)
                         else:
                             self.__whisper.whisper(username, self.__languages["lan"]["bet_same_time"])
                     elif user_money < 1:
-                        self.__update(username, [None, None, 10, None, None, None, None], self.__users)
+                        self.__update(username, [None, None, 10, None, None, None, None, None], self.__users)
                         self.__save("users.csv", self.__users)
                         self.__whisper.whisper(username, self.__languages["lan"]["bet_no_coins"].format(username))
                     else:
@@ -902,13 +905,13 @@ class Bot_Omb(threading.Thread):
                         bet_sec = int(message[message.rfind(':')+1:message.rfind(' ')])
                         if not self.__bet_same_time(username, bet_min*60+bet_sec):
                             if self.__bets.bet(username, user_money, bet_spent, bet_hour, bet_min, bet_sec):
-                                self.__update(username, [None, None, None, None, None, None, bet_spent], self.__users)
+                                self.__update(username, [None, None, None, None, None, None, bet_spent, None], self.__users)
                                 self.__whisper.whisper(username, self.__languages["lan"]["bet_accept"].format(username))
                                 self.__save("users.csv", self.__users)
                         else:
                             self.__whisper.whisper(username, self.__languages["lan"]["bet_same_time"])
-                    elif user_money < 1:
-                        self.__update(username, [None, None, 10, None, None, None, None], self.__users)
+                    elif user_money < 1 and not self.__string_to_bool(self.__get_element('watchtime_mode', self.__settings)[eSetting.state]):
+                        self.__update(username, [None, None, 10, None, None, None, None, None], self.__users)
                         self.__save("users.csv", self.__users)
                         self.__whisper.whisper(username, self.__languages["lan"]["bet_no_coins"].format(username))
                     else:
@@ -925,7 +928,7 @@ class Bot_Omb(threading.Thread):
                 user_privileges = 0
             if user_privileges >= privileges:
                 url_name = message[message.find(' ')+1: len(message)]
-                self.__update(url_name, [None, None, None, True, None, None, None], self.__users)
+                self.__update(url_name, [None, None, None, True, None, None, None, None], self.__users)
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -950,7 +953,7 @@ class Bot_Omb(threading.Thread):
                                 self.__greetings = Greetings(self.__languages["obj"], self.__channel_name, self.__channel, self.__load("channel/"+self.__channel_name+"/greetings.csv"), int(self.__get_element('greetings_interval', self.__settings)[eSetting.state]))
                                 self.__chat_channel[self.__channel_name]['greetings'] = self.__greetings
                             if setting_name == "announce_mode" and not self.__string_to_bool(self.__get_element('announce_mode', self.__settings)[eSetting.state]):
-                                announce = self.__load("channel/"+chat_channel[i]+"/announcements.csv")
+                                announce = self.__load("channel/"+self.__channel_name+"/announcements.csv")
                                 announcements = []
                                 for key in announce:
                                     announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
@@ -963,8 +966,10 @@ class Bot_Omb(threading.Thread):
                                 for key in announcements:
                                     key.start()
                             if setting_name == "bank_mode" and not self.__string_to_bool(self.__get_element('bank_mode', self.__settings)[eSetting.state]): 
-                                self.__bank = Bank(chat_channel[i], self.__channel, self.__whisper)
-                                self.__chat_channel[chat_channel[i]]["bank"] = self.__bank
+                                self.__bank = Bank(self.__channel_name, self.__channel, self.__whisper)
+                                self.__chat_channel[self.__channel_name]["bank"] = self.__bank
+                            if setting_name == "watchtime_mode" and not self.__string_to_bool(self.__get_element('watchtime_mode', self.__settings)[eSetting.state]):
+                                self.__chat_channel[self.__channel_name]["watchtime"] = Watchtime(self.__channel_name)
                             self.__update(setting_name, [None, True], self.__settings)
                         elif setting_state == "off":
                             if setting_name == "greetings" and self.__greetings is not None:
@@ -981,11 +986,14 @@ class Bot_Omb(threading.Thread):
                             if setting_name == "bank_mode" and self.__string_to_bool(self.__get_element('bank_mode', self.__settings)[eSetting.state]): 
                                 self.__bank.finish()
                                 self.__bank = None
-                                self.__chat_channel[chat_channel[i]]["bank"] = None
+                                self.__chat_channel[self.__channel_name]["bank"] = None
                             if setting_name == "poll_mode" and self.__string_to_bool(self.__get_element('poll_mode', self.__settings)[eSetting.state]):
                                 self.__poll.finish()
                                 self.__poll = None
                                 self.__chat_channel[self.__channel_name]['poll'] = self.__poll
+                            if setting_name == "watchtime_mode" and self.__string_to_bool(self.__get_element('watchtime_mode', self.__settings)[eSetting.state]):
+                                self.__chat_channel[self.__channel_name]["watchtime"].finish()
+                                self.__chat_channel[self.__channel_name]["watchtime"] = None
                             self.__update(setting_name, [None, False], self.__settings)
                     elif setting_name != "warning_url" and setting_name != "warning_caps" and setting_name != "warning_long_text" and setting_name != "greetings" and setting_name != "command_mode" and setting_name != "bet_mode" and setting_name != "follow_mode" and setting_name != "announce_mode" and setting_name != "smm_mode" and setting_name != "poll_mode" and setting_name != "rank_mode" and setting_name != "bank_mode" and setting_name != "whitelist_mode":
                         if self.__isNumber(setting_state):
@@ -1031,7 +1039,7 @@ class Bot_Omb(threading.Thread):
                     if int(priv_num) > 99 or int(priv_num) < 0:
                         self.__channel.chat(self.__languages["lan"]["privileges_range"])
                     else:
-                        self.__update(priv_name, [None, priv_priv, None, None, None, None, None], self.__users)
+                        self.__update(priv_name, [None, priv_priv, None, None, None, None, None, None], self.__users)
                         self.__save("users.csv", self.__users)
                         self.__whisper.whisper(username, self.__languages["lan"]["privileges_assign"].format(priv_name, username, str(priv_priv)))
                         self.__whisper.whisper(priv_name, self.__languages["lan"]["privileges_assign_msg"].format(str(priv_priv)))
@@ -1177,7 +1185,7 @@ class Bot_Omb(threading.Thread):
                         self.__channel.timeout(username, 1)
                         return True
                     else:
-                        self.__update(username, [None, None, None, False, None, None, None], self.__users)
+                        self.__update(username, [None, None, None, False, None, None, None, None], self.__users)
                         return False
         return False
 
@@ -1228,7 +1236,7 @@ class Bot_Omb(threading.Thread):
         return self.__add(key, data)
 
     def __add(self, key, data):
-        if len(data) < 7:
+        if len(data) < 8:
             return False
         for i in range(len(data)):
             if data[i] is None:
