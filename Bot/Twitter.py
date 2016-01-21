@@ -44,13 +44,14 @@ class Twitter(threading.Thread):
         self.__api_Twitch = TwitchAPI()
         self.__channel_status = {}
         self.__status = ["belästigt Leute", "gurkt rum", "langweilt Andere", "vergrault Zuschauer", "präsentiert sich", "sucht den Lichtschalter", "sucht den Sinn des Lebens"]
+        last_status = self.__api_Twitter.get_user_timeline(screen_name="RetroTwitch")[0]["text"]
+        self.__last_status = last_status[0 : last_status.rfind(' ')]
         self.setDaemon(True)
         self.start()
 
     def run(self):
         while self.isAlive():
             channels = self.__api_Twitch.getJSON(config.TWITTER)
-            
             if channels is not None:
                 for channel in channels["stream"]:
                     if channel not in self.__channel_status:
@@ -62,7 +63,15 @@ class Twitter(threading.Thread):
                             if not self.__channel_status[channel]["online"]:
                                 self.__channel_status[channel]["online"] = True
                                 self.__channel_status[channel]["time"] = time.time()
-                                output = channel + " " + random.choice(self.__status).decode("utf-8") + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
+                                actual_status_id = random.choice(range(len(self.__status)))
+                                output = channel + " " + self.__status[actual_status_id].decode("utf-8") + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
+                                if self.__last_status == output[0: output.rfind(' ')]:
+                                    if actual_status_id == len(self.__channel_status)-1:
+                                        actual_status_id -= 1
+                                    else:
+                                        actual_status_id += 1
+                                    output = channel + " " + self.__status[actual_status_id].decode("utf-8") + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
+                                self.__last_status = output[0: output.rfind(' ')]
                                 self.__api_Twitter.update_status(status=output)
                         else:
                             self.__channel_status[channel]["online"] = False
