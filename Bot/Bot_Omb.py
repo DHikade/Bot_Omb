@@ -28,6 +28,7 @@ import re
 import time
 import datetime
 import copy
+import random
 
 import threading
 
@@ -137,6 +138,8 @@ class Bot_Omb(threading.Thread):
                     self.__url(username, message, int(self.__get_element('url', self.__settings)[eSetting.state]))
                     self.__help(username, message, int(self.__get_element('help', self.__settings)[eSetting.state]))
                     self.__coins(username, message, int(self.__get_element('coins', self.__settings)[eSetting.state]))
+                    self.__clam_ask(username, message, int(self.__get_element('clam_ask', self.__settings)[eSetting.state]))
+                    self.__roulette(username, message, int(self.__get_element('roulette', self.__settings)[eSetting.state]))
                     
                     if self.__string_to_bool(self.__get_element('command_mode', self.__settings)[eSetting.state]):
                         self.__command_add(username, message, int(self.__get_element('command_add', self.__settings)[eSetting.state]))
@@ -189,6 +192,9 @@ class Bot_Omb(threading.Thread):
                         self.__whitelist_remove(username, message, int(self.__get_element('whitelist_remove', self.__settings)[eSetting.state]))
                         self.__whitelist_show(username, message, int(self.__get_element('whitelist_show', self.__settings)[eSetting.state]))
 
+                    if self.__string_to_bool(self.__get_element('watchtime_mode', self.__settings)[eSetting.state]):
+                        self.__watchtime_me(username, message, int(self.__get_element('watchtime_me', self.__settings)[eSetting.state]))
+
                     time.sleep(config.RATE)
         print("Thread: {0} shutdown".format(self.__channel_name))
         
@@ -216,6 +222,54 @@ class Bot_Omb(threading.Thread):
                         self.__channel.chat(self.__languages["lan"]["language_later"])
                 else:
                     self.__channel.chat(self.__languages["lan"]["language_switch_fail"].format(language))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __watchtime_me(self, username, message, privileges):
+        if message == "!watchtime me":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+                user_watchtime = int(user[eUser.watchtime])
+            else:
+                user_privileges = 0
+                user_watchtime = 0
+            if user_privileges >= privileges:
+                if user_watchtime == 0:
+                    self.__whisper.whisper(username, self.__languages["lan"]["watchtime_zero"])
+                else:
+                    self.__whisper.whisper(username, self.__languages["lan"]["watchtime"].format(str(user_watchtime)))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __roulette(self, username, message, privileges):
+        if message == "!roulette":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                if random.randint(1,6) == random.randint(1,6):
+                    self.__channel.chat(self.__languages["lan"]["roulette_loose"].format(username))
+                    self.__channel.timeout(username, random.randint(1,60))
+                else:
+                    self.__channel.chat(self.__languages["lan"]["roulette_win"])
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __clam_ask(self, username, message, privileges):
+        if regex.REG_CLAM_ASK.match(message):
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                if random.randint(0,99) <= 49:
+                    self.__channel.chat(self.__languages["lan"]["clam_yes"])
+                else:
+                    self.__channel.chat(self.__languages["lan"]["clam_no"])
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 

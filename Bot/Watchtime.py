@@ -36,6 +36,7 @@ class Watchtime(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.__users = self.__load("channel/"+name+"/users.csv")
+        self.__channel_name = name
         self.__api = TwitchAPI(name.replace("#",""))
         self.__active = True
         self.start()
@@ -44,17 +45,20 @@ class Watchtime(threading.Thread):
         while self.__active:
             time.sleep(60)
             if self.__api.getKraken_isOnline():
-                self.__users = self.__load("users.csv")
+                self.__users = self.__load("channel/"+self.__channel_name+"/users.csv")
                 if self.__active:
                     users_chat = self.__api.getTMI_Chatters_Users()
                     if users_chat is not None:
-                        for i in range(len(users)):
-                            user = self.__get_element(users_chat[i], self.__users)
-                            if user is None:
-                                watched = 1
-                            else:
-                                watched = int(user[i][eUser.watchtime]) + 1
-                            self.__update(users_chat[i], [None, None, None, None, None, None, None, watched], self.__users)
+                        for i in range(len(users_chat)):
+                            user = self.__get_element(users_chat[i].lower(), self.__users)
+                            watched = 1
+                            if user is not None:
+                                watched = int(user[eUser.watchtime]) + 1
+                            self.__update(users_chat[i].lower(), [None, None, None, None, None, None, None, watched], self.__users)
+                        self.__save("users.csv", self.__users)
+
+    def __watchtime_me(self):
+        pass
 
     def __update(self, key, data, frm):
         for i in range(len(frm)):
