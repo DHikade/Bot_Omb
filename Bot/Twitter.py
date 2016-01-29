@@ -43,7 +43,7 @@ class Twitter(threading.Thread):
         self.__api_Twitter = Twython(config.CONSUMER_KEY, config.CONSUMER_SECRET, config.ACCESS_KEY, config.ACCESS_SECRET)
         self.__api_Twitch = TwitchAPI()
         self.__channel_status = {}
-        self.__status = ["belästigt Leute", "gurkt rum", "langweilt Andere", "vergrault Zuschauer", "präsentiert sich", "sucht den Lichtschalter", "sucht den Sinn des Lebens"]
+        self.__status = ["belästigt Leute", "gurkt rum", "langweilt Andere", "vergrault Zuschauer", "präsentiert sich", "sucht den Lichtschalter", "sucht den Sinn des Lebens", "spielt spaßige Spiele", "empört sich", "führt Selbstgespräche", "macht irgendwas interessantes"]
         last_status = self.__api_Twitter.get_user_timeline(screen_name="RetroTwitch")[0]["text"]
         self.__last_status = last_status[0 : last_status.rfind(' ')]
         self.setDaemon(True)
