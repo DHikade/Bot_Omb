@@ -212,7 +212,7 @@ class TwitchAPI():
             return None 
 
     def getTMI_Chatters(self):
-        return self.getJSON(self.__baseTMI+self.__channel_Nick+"/chatters")
+        return self.__json_receive(self.__baseTMI+self.__channel_Nick+"/chatters")
 
     def getTMI_Chatters_Users(self):
         chatters = self.getTMI_Chatters()

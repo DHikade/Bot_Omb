@@ -45,15 +45,18 @@ class Watchtime(threading.Thread):
         while self.__active:
             time.sleep(60)
             if self.__api.getKraken_isOnline():
+                print(self.__channel_name+" is online!")
                 self.__users = self.__load("channel/"+self.__channel_name+"/users.csv")
                 if self.__active:
                     users_chat = self.__api.getTMI_Chatters_Users()
+                    print(str(users_chat))
                     if users_chat is not None:
                         for i in range(len(users_chat)):
                             user = self.__get_element(users_chat[i].lower(), self.__users)
                             watched = 1
                             if user is not None:
                                 watched = int(user[eUser.watchtime]) + 1
+                            print(users_chat[i].lower() + "is watching the stream since "+str(watched)+" minutes!")
                             self.__update(users_chat[i].lower(), [None, None, None, None, None, None, None, watched], self.__users)
                         self.__save("users.csv", self.__users)
 
