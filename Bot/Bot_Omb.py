@@ -236,9 +236,9 @@ class Bot_Omb(threading.Thread):
                 user_watchtime = 0
             if user_privileges >= privileges:
                 if user_watchtime == 0:
-                    self.__whisper.whisper(username, self.__languages["lan"]["watchtime_zero"])
+                    self.__channel.chat(self.__languages["lan"]["watchtime_zero"])
                 else:
-                    self.__whisper.whisper(username, self.__languages["lan"]["watchtime"].format(str(user_watchtime)))
+                    self.__channel.chat(self.__languages["lan"]["watchtime"].format(str(user_watchtime)))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -747,23 +747,26 @@ class Bot_Omb(threading.Thread):
                     announce_sec = int(announce_msg[:announce_msg.find(' ')])
                     announce_msg = announce_msg[announce_msg.find(' ')+1:len(message)]
                     announce_check = self.__get_element(announce_id, self.__announcelist)
-                    if  announce_check != None:
-                        if self.__update(announce_id, [announce_id, 0, announce_min, announce_sec, announce_msg], self.__announcelist):
-                            for key in self.__announcements:
-                                if key.getID() == announce_id:
-                                    key.setMinute(announce_min)
-                                    key.setSecond(announce_sec)
-                                    key.setMessage(announce_msg)
-                                    self.__save("announcements.csv", self.__announcelist)
-                                    break
+                    if announce_min >= 1:
+                        if  announce_check != None:
+                            if self.__update(announce_id, [announce_id, 0, announce_min, announce_sec, announce_msg], self.__announcelist):
+                                for key in self.__announcements:
+                                    if key.getID() == announce_id:
+                                        key.setMinute(announce_min)
+                                        key.setSecond(announce_sec)
+                                        key.setMessage(announce_msg)
+                                        self.__save("announcements.csv", self.__announcelist)
+                                        break
+                        else:
+                            announce_announcement = Announcement(announce_id, announce_msg, self.__channel, 0, announce_min, announce_sec)
+                            announce_announcement.setName(announce_id)
+                            self.__announcements.append(announce_announcement)
+                            self.__announcelist.append([announce_id, 0, announce_min, announce_sec, announce_msg])
+                            self.__save("announcements.csv", self.__announcelist)
+                            announce_announcement.start()
+                        self.__channel.chat(self.__languages["lan"]["announcement_add"].format(announce_id))
                     else:
-                        announce_announcement = Announcement(announce_id, announce_msg, self.__channel, 0, announce_min, announce_sec)
-                        announce_announcement.setName(announce_id)
-                        self.__announcements.append(announce_announcement)
-                        self.__announcelist.append([announce_id, 0, announce_min, announce_sec, announce_msg])
-                        self.__save("announcements.csv", self.__announcelist)
-                        announce_announcement.start()
-                    self.__channel.chat(self.__languages["lan"]["announcement_add"].format(announce_id))
+                        self.__channel.chat(self.__languages["lan"]["announcement_time"])
                 elif regex.REG_ANNOUNCE_HOUR_MIN_SEC.match(message):
                     announce_msg = message[message.find(' ')+1:len(message)]
                     announce_id = announce_msg[:announce_msg.find(' ')]
@@ -775,24 +778,27 @@ class Bot_Omb(threading.Thread):
                     announce_sec = int(announce_msg[:announce_msg.find(' ')])
                     announce_msg = announce_msg[announce_msg.find(' ')+1:len(message)]
                     announce_check = self.__get_element(announce_id, self.__announcelist)
-                    if  announce_check != None:
-                        if self.__update(announce_id, [announce_id, 0, announce_min, announce_sec, announce_msg], self.__announcelist):
-                            for key in self.__announcements:
-                                if key.getID() == announce_id:
-                                    key.setHour(announce_hour)
-                                    key.setMinute(announce_min)
-                                    key.setSecond(announce_sec)
-                                    key.setMessage(announce_msg)
-                                    self.__save("announcements.csv", self.__announcelist)
-                                    break
+                    if announce_min >= 1:
+                        if  announce_check != None:
+                            if self.__update(announce_id, [announce_id, 0, announce_min, announce_sec, announce_msg], self.__announcelist):
+                                for key in self.__announcements:
+                                    if key.getID() == announce_id:
+                                        key.setHour(announce_hour)
+                                        key.setMinute(announce_min)
+                                        key.setSecond(announce_sec)
+                                        key.setMessage(announce_msg)
+                                        self.__save("announcements.csv", self.__announcelist)
+                                        break
+                        else:
+                            announce_announcement = Announcement(announce_id, announce_msg, self.__channel, announce_hour, announce_min, announce_sec)
+                            announce_announcement.setName(announce_id)
+                            self.__announcements.append(announce_announcement)
+                            self.__announcelist.append([announce_id, announce_hour, announce_min, announce_sec, announce_msg])
+                            self.__save("announcements.csv", self.__announcelist)
+                            announce_announcement.start()
+                        self.__channel.chat(self.__languages["lan"]["announcement_add"].format(announce_id))
                     else:
-                        announce_announcement = Announcement(announce_id, announce_msg, self.__channel, announce_hour, announce_min, announce_sec)
-                        announce_announcement.setName(announce_id)
-                        self.__announcements.append(announce_announcement)
-                        self.__announcelist.append([announce_id, announce_hour, announce_min, announce_sec, announce_msg])
-                        self.__save("announcements.csv", self.__announcelist)
-                        announce_announcement.start()
-                    self.__channel.chat(self.__languages["lan"]["announcement_add"].format(announce_id))
+                        self.__channel.chat(self.__languages["lan"]["announcement_time"])
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -1307,7 +1313,7 @@ class Bot_Omb(threading.Thread):
         return True
 
     def __warning(self, username, message):
-        whitelist_user =  self.__get_element(username, self.__whitelist)
+        whitelist_user = self.__get_element(username, self.__whitelist)
         if whitelist_user is not None:
             if self.__warning_url(username, message) or self.__warning_caps(username, message) or self.__warning_long_text(username, message):
                 user = self.__get_element(username, self.__users)
