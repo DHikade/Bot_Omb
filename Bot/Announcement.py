@@ -26,6 +26,7 @@
 
 import time
 import threading
+import config
 
 class Announcement(threading.Thread):
     def __init__(self, ident, message, channel, hour, minute, second):
@@ -41,6 +42,7 @@ class Announcement(threading.Thread):
     def run(self):
         while self.__active:
             time.sleep(self.__hour * 60 * 60 + self.__minute * 60 + self.__second)
+            time.sleep(config.RATE)
             if self.__active:
                 self.__channel.chat(self.__message)
             
