@@ -77,7 +77,7 @@ class Poll(threading.Thread):
                         break
                 if check:
                     poll_vote = len(self.__poll_option)
-            if int(poll_vote) < len(self.__poll_option):
+            if int(poll_vote) >= 0 and int(poll_vote) < len(self.__poll_option):
                 self.__poll_user_list[username] = int(poll_vote)
                 return self.__language["poll_vote"]
             else:
