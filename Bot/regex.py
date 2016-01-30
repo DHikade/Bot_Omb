@@ -63,3 +63,4 @@ REG_BANK_GUARD_ADD = re.compile('!bank[\s]{1}guard[\s]{1}add[\s]{1}[\S]+[\s]{1}(
 REG_WHITELIST_ADD = re.compile('!whitelist[\s]{1}add[\s]{1}[\S]*$')
 REG_WHITELIST_REMOVE = re.compile('!whitelist[\s]{1}remove[\s]{1}[\S]*$')
 REG_CLAM_ASK = re.compile('!clam[\s]{1}.*[\S]$')
+REG_HUG_OTHER = re.compile('!hug[\s]{1}[\S]+$')

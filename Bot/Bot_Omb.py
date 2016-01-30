@@ -140,6 +140,8 @@ class Bot_Omb(threading.Thread):
                     self.__coins(username, message, int(self.__get_element('coins', self.__settings)[eSetting.state]))
                     self.__clam_ask(username, message, int(self.__get_element('clam_ask', self.__settings)[eSetting.state]))
                     self.__roulette(username, message, int(self.__get_element('roulette', self.__settings)[eSetting.state]))
+                    self.__hug_random(username, message, int(self.__get_element('hug_random', self.__settings)[eSetting.state]))
+                    self.__hug_other(username, message, int(self.__get_element('hug_other', self.__settings)[eSetting.state]))
                     
                     if self.__string_to_bool(self.__get_element('command_mode', self.__settings)[eSetting.state]):
                         self.__command_add(username, message, int(self.__get_element('command_add', self.__settings)[eSetting.state]))
@@ -222,6 +224,40 @@ class Bot_Omb(threading.Thread):
                         self.__channel.chat(self.__languages["lan"]["language_later"])
                 else:
                     self.__channel.chat(self.__languages["lan"]["language_switch_fail"].format(language))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __hug_random(self, username, message, privileges):
+        if message == "!hug random":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                api = TwitchAPI(self.__channel_name[1:])
+                all_chatters = api.getTMI_Chatters_All()
+                if all_chatters is not None:
+                    all_chatters.remove(username)
+                    if len(all_chatters) >= 1:
+                        self.__channel.chat(self.__languages["lan"]["hug_person"].format(str(random.choice(all_chatters)), username))
+                    else:
+                        self.__channel.chat(self.__languages["lan"]["hug_alone"].format(username))
+                else:
+                    self.__channel.chat(self.__languages["lan"]["hug_fail"])
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __hug_other(self, username, message, privileges):
+        if regex.REG_HUG_OTHER.match(message) and message != "!hug random":
+            user = self.__get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                hug_person = message[message.find(' ')+1:len(message)]
+                self.__channel.chat(self.__languages["lan"]["hug_person"].format(hug_person, username))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -747,7 +783,7 @@ class Bot_Omb(threading.Thread):
                     announce_sec = int(announce_msg[:announce_msg.find(' ')])
                     announce_msg = announce_msg[announce_msg.find(' ')+1:len(message)]
                     announce_check = self.__get_element(announce_id, self.__announcelist)
-                    if announce_min >= 1:
+                    if announce_min >= 1 and len(self.__announcelist) < 3:
                         if  announce_check != None:
                             if self.__update(announce_id, [announce_id, 0, announce_min, announce_sec, announce_msg], self.__announcelist):
                                 for key in self.__announcements:
@@ -766,7 +802,7 @@ class Bot_Omb(threading.Thread):
                             announce_announcement.start()
                         self.__channel.chat(self.__languages["lan"]["announcement_add"].format(announce_id))
                     else:
-                        self.__channel.chat(self.__languages["lan"]["announcement_time"])
+                        self.__channel.chat(self.__languages["lan"]["announcement_fail"])
                 elif regex.REG_ANNOUNCE_HOUR_MIN_SEC.match(message):
                     announce_msg = message[message.find(' ')+1:len(message)]
                     announce_id = announce_msg[:announce_msg.find(' ')]
@@ -778,7 +814,7 @@ class Bot_Omb(threading.Thread):
                     announce_sec = int(announce_msg[:announce_msg.find(' ')])
                     announce_msg = announce_msg[announce_msg.find(' ')+1:len(message)]
                     announce_check = self.__get_element(announce_id, self.__announcelist)
-                    if announce_min >= 1:
+                    if announce_min >= 1 and len(self.__announcelist) < 3:
                         if  announce_check != None:
                             if self.__update(announce_id, [announce_id, 0, announce_min, announce_sec, announce_msg], self.__announcelist):
                                 for key in self.__announcements:
@@ -798,7 +834,7 @@ class Bot_Omb(threading.Thread):
                             announce_announcement.start()
                         self.__channel.chat(self.__languages["lan"]["announcement_add"].format(announce_id))
                     else:
-                        self.__channel.chat(self.__languages["lan"]["announcement_time"])
+                        self.__channel.chat(self.__languages["lan"]["announcement_fail"])
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 

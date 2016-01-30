@@ -221,5 +221,13 @@ class TwitchAPI():
         else:
             return None
 
+    def getTMI_Chatters_All(self):
+        chatters = self.getTMI_Chatters()
+        if chatters is not None:
+            all_chatters = chatters["chatters"]["moderators"] + chatters["chatters"]["staff"] + chatters["chatters"]["admins"] + chatters["chatters"]["global_mods"] + chatters["chatters"]["viewers"]
+            return all_chatters
+        else:
+            return None
+
     def getTMI_Chatter_Count(self):
         return self.getJSON(self.__baseTMI+self.__channel_Nick)["chatter_count"]
