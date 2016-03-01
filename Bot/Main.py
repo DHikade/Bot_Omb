@@ -110,6 +110,9 @@ def follow(username, message, privileges):
                 try:
                     os.mkdir(config.PATH+"channel/"+"#"+username)
                     os.mkdir(config.PATH+"channel/"+"#"+username+"/bank")
+                    quotes_file = open(config.PATH+"channel/"+"#"+username+"/quotes.csv", "w")
+                    quotes_file.write("")
+                    quotes_file.close()
                     guards_file = open(config.PATH+"channel/"+"#"+username+"/bank/"+"guards.csv", "w")
                     guards_file.write("Karl;20\nMark;50\nLisa;40\n")
                     guards_file.close()
@@ -126,7 +129,7 @@ def follow(username, message, privileges):
                     greetings_file.write("")
                     greetings_file.close()
                     settings_file = open(config.PATH+"channel/"+"#"+username+"/"+"settings.csv", "w")
-                    settings_file.write("language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\ncommand_mode;True\nbet_mode;True\nfollow_mode;True\nannounce_mode;True\nsmm_mode;True\npoll_mode;True\nrank_mode;True\nbank_mode;True\nwhitelist_mode;True\nwatchtime_mode;False\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\nupsince;0\nrank_add;99\nrank_remove;99\nrank_show;99\nrank_show_me;0\nbank_robbery;99\nbank_spy;99\nbank_robbery_flee;99\nbank_guard_add;99\nbank_guard_remove;99\nbank_guard_show;99\nwhitelist_add;99\nwhitelist_remove;99\nwhitelist_show;99\nclam_ask;99\nroulette;99\n")
+                    settings_file.write("language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\ncommand_mode;True\nbet_mode;True\nfollow_mode;True\nannounce_mode;True\nsmm_mode;True\npoll_mode;True\nrank_mode;True\nbank_mode;True\nwhitelist_mode;True\nwatchtime_mode;False\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\nupsince;0\nrank_add;99\nrank_remove;99\nrank_show;99\nrank_show_me;0\nbank_robbery;99\nbank_spy;99\nbank_robbery_flee;99\nbank_guard_add;99\nbank_guard_remove;99\nbank_guard_show;99\nwhitelist_add;99\nwhitelist_remove;99\nwhitelist_show;99\nclam_ask;99\nroulette;99\nwatchtime_me;99\nhug_random;99\nhug_other;99\nquote_add;99\nquote_remove;99\nquote_show;99\n")
                     settings_file.close()
                     users_file = open(config.PATH+"channel/"+"#"+username+"/"+"users.csv", "w")
                     users_file.write(username+";100;100;False;0;0;0\n")
