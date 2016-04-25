@@ -1310,6 +1310,8 @@ class Bot_Omb(threading.Thread):
             self.__whisper.whisper(username, self.__languages["lan"]["help"])
         elif regex.REG_HELP_EXTENDED.match(message):
             help_command = message[message.find(' ')+1:len(message)].replace("\r\n","")
+            if help_command[0] == '!':
+                help_command = help_command[1:]
             if help_command == "command":
                 self.__whisper.whisper(username, self.__languages["lan"]["help_command"])
             elif help_command == "bet":
