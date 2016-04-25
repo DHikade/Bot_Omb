@@ -33,7 +33,6 @@ from twython import Twython
 import config
 import random
 import time
-import json
 import threading
 
 class Twitter(threading.Thread):
@@ -72,7 +71,10 @@ class Twitter(threading.Thread):
                                         actual_status_id += 1
                                     output = channel + " " + self.__status[actual_status_id].decode("utf-8") + " auf Twitch! Schau vorbei unter http://twitch.tv/" + channel
                                 self.__last_status = output[0: output.rfind(' ')]
-                                self.__api_Twitter.update_status(status=output)
+                                try:
+                                    self.__api_Twitter.update_status(status=output)
+                                except:
+                                    print("Looks like a Twython Error!")
                         else:
                             self.__channel_status[channel]["online"] = False
                             self.__channel_status[channel]["time"] = 0

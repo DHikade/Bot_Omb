@@ -30,6 +30,7 @@ from TwitchAPI import TwitchAPI
 from Twitter import Twitter
 import eUser
 import regex
+import data
 
 import config
 import os
@@ -39,44 +40,6 @@ import time
 import threading
 
 follow_requests = {}
-
-def show(elements):
-    for i in range(len(elements)):
-        print(elements[i])
-
-def get_element(key, frm):
-    for elem in frm:
-        if key in elem:
-            return elem
-    return None
-
-def save(file_name, data):
-    file_save = open(config.PATH+"channel/"+file_name, 'w')
-    for i in range(len(data)):
-        output = ''
-        for j in range(len(data[i])):
-            output += str(data[i][j]) + ";"
-        file_save.write(output[:len(output)-1]+"\n")
-    file_save.close()
-
-def load(file_name):
-    with open(config.PATH+file_name, 'r') as loaded:
-        lines = loaded.readlines()
-    loaded_lines = []
-    for line in lines:
-        entrys = []
-        while ';' in line:
-            entrys.append(line[:line.find(';')])
-            line = line[line.find(';')+1:len(line)]
-        entrys.append(line[:len(line)-1])
-        loaded_lines.append(entrys)
-    return loaded_lines
-
-def has(arr, element):
-    for key in arr:
-        if key[0] == element:
-            return True
-    return False
 
 def release(value):
     if hasattr(value, "_tstate_lock"):
@@ -94,51 +57,41 @@ def shutdown(bot_thread):
             bot_thread.get_Channel()[j]['watchtime'].finish()
         if bot_thread.get_Channel()[j]['bank'] is not None:
             bot_thread.get_Channel()[j]['bank'].finish()
+        if bot_thread.get_Channel()[j]['api'] is not None:
+            bot_thread.get_Channel()[j]['api'].finish()
         for announcement in bot_thread.get_Channel()[j]['announcements']:
             announcement.finish()
     bot_thread.finish()
 
 def follow(username, message, privileges):
     if message == "!follow":
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
             user_privileges = 0
         if user_privileges >= privileges:
-            if not has(main_channel_list, "#"+username):
+            if not data.has(main_channel_list, "#"+username):
                 try:
                     os.mkdir(config.PATH+"channel/"+"#"+username)
                     os.mkdir(config.PATH+"channel/"+"#"+username+"/bank")
-                    quotes_file = open(config.PATH+"channel/"+"#"+username+"/quotes.csv", "w")
-                    quotes_file.write("")
-                    quotes_file.close()
-                    guards_file = open(config.PATH+"channel/"+"#"+username+"/bank/"+"guards.csv", "w")
-                    guards_file.write("Karl;20\nMark;50\nLisa;40\n")
-                    guards_file.close()
-                    whitelist_file = open(config.PATH+"channel/"+"#"+username+"/"+"whitelist.csv", "w")
-                    whitelist_file.write("bot_omb\nnightbot\ntipeeebot\nwizebot\nmikuia\nmoobot\n")
-                    whitelist_file.close()
-                    commands_file = open(config.PATH+"channel/"+"#"+username+"/"+"commands.csv", "w")
-                    commands_file.write("")
-                    commands_file.close()
-                    announce_file = open(config.PATH+"channel/"+"#"+username+"/"+"announcements.csv", "w")
-                    announce_file.write("")
-                    announce_file.close()
-                    greetings_file = open(config.PATH+"channel/"+"#"+username+"/"+"greetings.csv", "w")
-                    greetings_file.write("")
-                    greetings_file.close()
-                    settings_file = open(config.PATH+"channel/"+"#"+username+"/"+"settings.csv", "w")
-                    settings_file.write("language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\ncommand_mode;True\nbet_mode;True\nfollow_mode;True\nannounce_mode;True\nsmm_mode;True\npoll_mode;True\nrank_mode;True\nbank_mode;True\nwhitelist_mode;True\nwatchtime_mode;False\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\nupsince;0\nrank_add;99\nrank_remove;99\nrank_show;99\nrank_show_me;0\nbank_robbery;99\nbank_spy;99\nbank_robbery_flee;99\nbank_guard_add;99\nbank_guard_remove;99\nbank_guard_show;99\nwhitelist_add;99\nwhitelist_remove;99\nwhitelist_show;99\nclam_ask;99\nroulette;99\nwatchtime_me;99\nhug_random;99\nhug_other;99\nquote_add;99\nquote_remove;99\nquote_show;99\n")
-                    settings_file.close()
-                    users_file = open(config.PATH+"channel/"+"#"+username+"/"+"users.csv", "w")
-                    users_file.write(username+";100;100;False;0;0;0\n")
-                    users_file.close()
-                    ranks_file = open(config.PATH+"channel/"+"#"+username+"/"+"ranks.csv", "w")
-                    ranks_file.write("")
-                    ranks_file.close()
+                    
+                    files = [
+                     {"file_name" : "quotes.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : ""},
+                     {"file_name" : "guards.csv", "file_path" : config.PATH+"channel/#"+username+"/bank/", "file_data" : "Karl;20\nMark;50\nLisa;40\n"},
+                     {"file_name" : "whitelist.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : "bot_omb\nnightbot\ntipeeebot\nwizebot\nmikuia\nmoobot\n"},
+                     {"file_name" : "commands.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : ""},
+                     {"file_name" : "announcements.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : ""},
+                     {"file_name" : "greetings.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : ""},
+                     {"file_name" : "settings.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : "language_chat;english\nwarning_url;False\nwarning_caps;False\nwarning_long_text;False\ngreetings;False\ngreetings_interval;60\ncommand_mode;True\nbet_mode;True\nfollow_mode;True\nannounce_mode;True\nsmm_mode;True\npoll_mode;True\nrank_mode;True\nbank_mode;True\nwhitelist_mode;True\nwatchtime_mode;False\nhelp;0\ncoins;0\ncommand_add;99\ncommand_remove;99\ncommand_show;99\nprivileges;99\nsetting;99\nsetting_show;99\nurl;99\nbet;0\nbet_start;99\nbet_stop;99\nbet_reset;99\nfollow;0\nfollow_member;0\nfollow_member_other;99\nunfollow;0\ninfo;0\nannounce_add;99\nannounce_remove;99\nannounce_show;99\nsmm_level_submit;99\nsmm_level_submit_other;99\nsmm_level_show;99\nsmm_level_next;99\npoll_start;99\npoll_vote;99\npoll_result;99\nlanguage;99\nupsince;0\nrank_add;99\nrank_remove;99\nrank_show;99\nrank_show_me;0\nbank_robbery;99\nbank_spy;99\nbank_robbery_flee;99\nbank_guard_add;99\nbank_guard_remove;99\nbank_guard_show;99\nwhitelist_add;99\nwhitelist_remove;99\nwhitelist_show;99\nclam_ask;99\nroulette;99\nwatchtime_me;99\nhug_random;99\nhug_other;99\nquote_add;99\nquote_remove;99\nquote_show;99\n"},
+                     {"file_name" : "users.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : username+";100;100;False;0;0;0\n"},
+                     {"file_name" : "ranks.csv", "file_path" : config.PATH+"channel/#"+username+"/", "file_data" : ""}
+                    ]
+                    
+                    data.create(files)
+                    
                     main_channel_list.append(["#"+username])
-                    save("channel.csv", main_channel_list)
+                    data.save(config.PATH+"channel/channel.csv", main_channel_list)
                 except OSError:
                     main_whisper.whisper(username, "Something went wrong. Please contact a Bot_Omb developer!")
                 new_bot_thread = Bot_Omb(["#"+username])
@@ -154,19 +107,19 @@ def follow(username, message, privileges):
 
 def unfollow(username, message, privileges):
     if message == "!unfollow":
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
             user_privileges = 0
         if user_privileges >= privileges:
-            if has(main_channel_list, "#"+username):
+            if data.has(main_channel_list, "#"+username):
                 try:
                     shutil.rmtree(config.PATH+"channel/#"+username)
                     for key in main_channel_list:
                         if key[0] == "#"+username:
                             main_channel_list.remove(key)
-                            save("channel.csv", main_channel_list)
+                            data.save(config.PATH+"channel/channel.csv", main_channel_list)
                             break
                 except OSError:
                     main_whisper.whisper(username, "Something went wrong. Please contact a Bot_Omb developer!")
@@ -182,7 +135,7 @@ def unfollow(username, message, privileges):
 
 def restart(username, message, privileges):
     if message == "!restart":
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
@@ -204,7 +157,7 @@ def restart(username, message, privileges):
 
 def restart_all(username, message, privileges):
     if message == "!restart all":
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
@@ -221,7 +174,7 @@ def restart_all(username, message, privileges):
 
 def shutdown_all(username, message, privileges):
     if message == "!shutdown":
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
@@ -235,19 +188,19 @@ def shutdown_all(username, message, privileges):
 
 def show_threads(username, message, privileges):
     if message == "!threads":
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
             user_privileges = 0
         if user_privileges >= privileges:
-            show(bot_threads)
+            data.show(bot_threads)
         else:
             main_whisper.whisper(username, "Your privileges level is not high enough to perform this command! You need at least a level of {0}.".format(privileges))
 
 def show_follows(username, message, privileges):
     if message == "!follows":
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
@@ -264,7 +217,7 @@ def show_follows(username, message, privileges):
 
 def show_follows_other(username, message, privileges):
     if regex.REG_FOLLOWS_OTHER.match(message):
-        user = get_element(username, main_users)
+        user = data.get_element(username, main_users)
         if user is not None:
             user_privileges = int(user[eUser.privileges])
         else:
@@ -291,12 +244,12 @@ def show_follows_other(username, message, privileges):
 
 if __name__ == '__main__':
     main_name = "#bot_omb"
-    main_channel = irc(config.HOST, config.PORT, config.NICK, config.PASS, [main_name])
-    main_whisper = irc(config.HOST_WHISPER_120, config.PORT, config.NICK, config.PASS)
-    main_users = load("channel/"+main_name+"/users.csv")
-    main_settings = load("channel/"+main_name+"/settings.csv")
-    main_commands = load("channel/"+main_name+"/commands.csv")
-    main_channel_list = load("channel/channel.csv")
+    main_channel = irc(config.HOST, config.PORT_CHAT, config.NICK, config.PASS, [main_name])
+    main_whisper = irc(config.HOST, config.PORT_WHISPER, config.NICK, config.PASS)
+    main_users = data.load(config.PATH+"channel/"+main_name+"/users.csv")
+    main_settings = data.load(config.PATH+"channel/"+main_name+"/settings.csv")
+    main_commands = data.load(config.PATH+"channel/"+main_name+"/commands.csv")
+    main_channel_list = data.load(config.PATH+"channel/channel.csv")
     with open(config.PATH+"channel/channel.csv", 'r') as loaded:
         lines = loaded.readlines()
     bot_threads = []

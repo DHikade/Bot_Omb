@@ -24,10 +24,9 @@
     
 '''
 
-HOST = "irc.twitch.tv"
-HOST_WHISPER_120 = "199.9.253.120"
-HOST_WHISPER_119 = "199.9.253.119"
-PORT = 6667
+HOST = "irc.chat.twitch.tv"
+PORT_CHAT = 6667
+PORT_WHISPER = 80
 NICK = "YOUR-BOT-NICK"
 PASS = "oauth:AUTH-KEY"
 RATE = 1.5

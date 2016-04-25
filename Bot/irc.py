@@ -43,7 +43,7 @@ class irc():
         try:
             self.__connect(self.__irc_host, self.__irc_port)
             self.__login(self.__irc_nick, self.__irc_password)
-            if self.__irc_host == config.HOST:
+            if self.__irc_port == config.PORT_CHAT:
                 if self.__irc_channel != None:
                     for i in range(len(self.__irc_channel)):
                         print("IRC: "+self.__irc_channel[i])
@@ -51,10 +51,10 @@ class irc():
                 else:
                     print("Connection aboard. No Channel was defined for {0}".format(config.HOST))
                     self.__irc_socket.close()
-            elif self.__irc_host == config.HOST_WHISPER_120 or self.__irc_host == config.HOST_WHISPER_119:
+            elif self.__irc_port == config.PORT_WHISPER:
                 self.__enable_whisper()
             else:
-                print("Please check your Host. You can connect to the Twitch IRC Server on {0}. The Group Servers for whispers can be accessed by {1} or {2}".format(config.HOST,config.HOST_WHISPER_120,config.HOST_WHISPER_119))
+                print("Please check your Port. You can connect to the Twitch IRC Server on {0}. The Group Servers for whispers can be accessed by {1}.".format(config.HOST,config.PORT_WHISPER))
         except:
             print("Connection to {0} on port {1} failed".format(self.__irc_host, self.__irc_port))
 
@@ -100,10 +100,10 @@ class irc():
         self.__irc_socket.send("PRIVMSG {0} :{1} \r\n".format(self.__irc_channel_active, message))
 
     def whisper(self, user, message):
-        if self.__irc_host == config.HOST_WHISPER_120 or self.__irc_host == config.HOST_WHISPER_119:
+        if self.__irc_port == config.PORT_WHISPER:
             self.__irc_socket.send("PRIVMSG #jtv :/w {0} {1} \r\n".format(user, message))
         else:
-            print("You are not connected to the Group Chat Servers! Please connect first to {0} or {1}.".format(config.HOST_WHISPER_120,config.HOST_WHISPER_119))
+            print("You are not connected to the Group Chat Servers! Please connect first to {0}.".format(config.PORT_WHISPER))
 
     def pong(self):
         self.__irc_socket.send("PONG :tmi.twitch.tv\r\n")

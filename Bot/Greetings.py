@@ -27,19 +27,19 @@
 import time
 import threading
 
-from TwitchAPI import TwitchAPI
 import config
+import data
 
 class Greetings(threading.Thread):
 
-    def __init__(self, language, name, channel, greeted, interval = 60):
+    def __init__(self, api, language, name, channel, greeted, interval = 60):
         self.__language = language.get_Languages()
         threading.Thread.__init__(self)
         self.__greeted = greeted
         self.__channel = channel
         self.__interval = interval
         self.__name = name
-        self.__api = TwitchAPI(self.__name.replace("#",""))
+        self.__api = api
         self.__active = True
         self.start()
 
@@ -51,31 +51,22 @@ class Greetings(threading.Thread):
             else:
                 usernames += ", " + users[i]
             self.__greeted.append([users[i]])
-        self.__save("greetings.csv", self.__greeted)
+        data.save(config.PATH+"channel/"+self.__name+"/greetings.csv", self.__greeted)
         self.__channel.chat(self.__language["greetings"].format(usernames))
 
     def run(self):
         while self.__active:
             time.sleep(self.__interval)
-            if self.__api.getKraken_isOnline():
+            if self.__api.getOnlineState(self.__name):
                 if self.__active:
-                    users = self.__api.getTMI_Chatters_Users()
+                    users = self.__api.getUsers(self.__name)
                     if users is not None:
                         greet = []
                         for i in range(len(users)):
                             if [users[i]] not in self.__greeted:
                                 greet.append(users[i])
                         if len(greet) > 0:
-                            self.__greet(greet)    
-
-    def __save(self, file_name, data):
-        file_save = open(config.PATH+"channel/"+self.__name+"/"+file_name, 'w')
-        for i in range(len(data)):
-            output = ''
-            for j in range(len(data[i])):
-                output += str(data[i][j]) + ";"
-            file_save.write(output[:len(output)-1]+"\n")
-        file_save.close()
+                            self.__greet(greet)
 
     def finish(self):
         self.__active = False

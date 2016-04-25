@@ -31,9 +31,10 @@ import random
 import threading
 import time
 import config
+import data
 
 class Bank(threading.Thread):
-
+    
     def __init__(self, channel_name, channel, whisper):
         threading.Thread.__init__(self)
         self.__channel_name = channel_name
@@ -43,7 +44,7 @@ class Bank(threading.Thread):
         self.__spies = []
         self.__spy_attempts = 0
         self.__active = True
-        self.__guards = self.__load("guards.csv", "bank/")
+        self.__guards = data.load(config.PATH+"channel/"+self.__channel_name+"/bank/guards.csv")
         self.__guards_working = random.sample(self.__guards, random.randint(1,3))
         self.__vault = random.randint(100, 500)
         self.__languages = None
@@ -118,12 +119,12 @@ class Bank(threading.Thread):
         message = message[0:message.rfind(' ')]
         guard_name = message[message.rfind(' ')+1:len(message)]
         self.__guards.append([guard_name, guard_difficulty])
-        self.__save("guards.csv", self.__guards, "bank/")
+        data.save(config.PATH+"channel/"+self.__channel_name+"/bank/guards.csv", self.__guards)
         self.__channel.chat(self.__languages["lan"]["guard_add"].format(guard_name, guard_difficulty))
 
     def guard_remove(self, username, message):
         guard = message[message.rfind(' ')+1:len(message)]
-        guard_element = self.__get_element(guard, self.__guards)
+        guard_element = data.get_element(guard, self.__guards)
         if (len(self.__guards) - 1) < 3:
             self.__whisper.whisper(username, self.__languages["lan"]["guard_remove_fail_count"].format(str(self.__guards)))
         elif guard_element is None:
@@ -134,52 +135,3 @@ class Bank(threading.Thread):
 
     def guard_show(self, message):
         self.__channel.chat(self.__languages["lan"]["guard_show"].format(str(self.__guards)))
-
-    def __get_element(self, key, frm):
-        for elem in frm:
-            if key in elem:
-                return elem
-        return None
-
-    def __save(self, file_name, data, sub_folder = ""):
-        file_save = open(config.PATH+"channel/"+self.__channel_name+"/"+sub_folder+file_name, 'w')
-        for i in range(len(data)):
-            output = ''
-            for j in range(len(data[i])):
-                output += str(data[i][j]) + ";"
-            file_save.write(output[:len(output)-1]+"\n")
-        file_save.close()
-
-    def __load(self, file_name, sub_folder = ""):
-        with open(config.PATH+"channel/"+self.__channel_name+"/"+sub_folder+file_name, 'r') as loaded:
-            lines = loaded.readlines()
-        loaded_lines = []
-        for line in lines:
-            entrys = []
-            while ';' in line:
-                entrys.append(line[:line.find(';')])
-                line = line[line.find(';')+1:len(line)]
-            entrys.append(line[:len(line)-1])
-            loaded_lines.append(entrys)
-        return loaded_lines
-
-    def __update(self, key, data, frm):
-        for i in range(len(frm)):
-            if key in frm[i]:
-                for j in range(len(frm[i])):
-                    if data[j] != None:
-                        frm[i][j] = data[j]
-                return True
-        return self.__add(key, data)
-
-    def __string_to_bool(self, message):
-        if message == "True":
-            return True
-        return False
-
-    def __isNumber(self, value):
-        try:
-            int(value)
-            return True
-        except ValueError:
-            return False
