@@ -26,17 +26,21 @@ Don't forget to create a new account on Twitch for your bot, and get the authent
 Now take your config.py and modify it so it fits your needs:
 
 ```python
-HOST = "irc.twitch.tv"
-HOST_WHISPER_120 = "199.9.253.120"
-HOST_WHISPER_119 = "199.9.253.119"
-PORT = 6667
-NICK = "NICK-OF-YOUR-BOT-ACCOUNT"
-PASS = "oauth:TWITCHAPP-KEY-OF-YOUR-BOT-ACCOUNT"
+HOST = "irc.chat.twitch.tv"
+PORT_CHAT = 6667
+PORT_WHISPER = 80
+NICK = "YOUR-BOT-NICK"
+PASS = "oauth:AUTH-KEY"
 RATE = 1.5
 VERSION = 1.0
 DEVELOPER = "Serdrad0x"
 CODE = "Python 3.4"
 PATH = "ABSOLUTE-PATH-TO-BOT-FOLDER"
+TWITTER= 'ABSOLUTE-PATH-TO-MEMBER-JSON'
+CONSUMER_KEY = 'TWITTER-CONSUMER_KEY'
+CONSUMER_SECRET = 'TWITTER-CONSUMER_SECRET'
+ACCESS_KEY = 'TWITTER-ACCESS_KEY'
+ACCESS_SECRET = 'TWITTER-ACCESS-SECRET'
 ```
 
 Now go to Bot/channel/#bot_omb and open the users.csv. Here you will need to add/modify the following line:
