@@ -933,10 +933,9 @@ class Bot_Omb(threading.Thread):
                     for key in self.__bets.get_bets():
                         if not data.update(key, [None, None, self.__bets.get_bets()[key]['bet_money'] - self.__bets.get_bets()[key]['bet_spent'], None, None, None, 0, None], self.__users):
                             self.__users.append([key, 0, self.__bets.get_bets()[key]['bet_money'] - self.__bets.get_bets()[key]['bet_spent'], False, 0, 0, 0, 0])
-                        data.show(self.__users)
                         data.save(config.PATH+"channel/"+self.__channel_name+"/users.csv", self.__users)
-                        self.__bets = None
-                        self.__chat_channel[self.__channel_name]['bets'] = self.__bets
+                    self.__bets = None
+                    self.__chat_channel[self.__channel_name]['bets'] = self.__bets
                 self.__channel.chat(bets_stop["msg"])
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
