@@ -88,3 +88,9 @@ def isNumber(value):
         return True
     except ValueError:
         return False
+    
+def toTime(minu):
+    hour, minu = divmod(minu, 60)
+    day, hour = divmod(hour, 24)
+    return [day, hour, minu]
+        

@@ -78,7 +78,7 @@ class Bot_Omb(threading.Thread):
                 for key in announcements:
                     key.start()
             if data.string_to_bool(data.get_element('watchtime_mode', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
-                self.__chat_channel[chat_channel[i]]["watchtime"] = Watchtime(self.__api, chat_channel[i])
+                self.__chat_channel[chat_channel[i]]["watchtime"] = Watchtime(self.__chat_channel[chat_channel[i]]["api"], chat_channel[i], self.__chat_channel[chat_channel[i]]["users"])
 
     def run(self):
         print("Thread: {0} started".format(self.__chat_channel))
@@ -276,7 +276,8 @@ class Bot_Omb(threading.Thread):
                 if user_watchtime == 0:
                     self.__channel.chat(self.__languages["lan"]["watchtime_zero"])
                 else:
-                    self.__channel.chat(self.__languages["lan"]["watchtime"].format(str(user_watchtime)))
+                    user_watchtime_output = data.toTime(user_watchtime)
+                    self.__channel.chat(self.__languages["lan"]["watchtime"].format(user_watchtime_output[0], user_watchtime_output[1], user_watchtime_output[2]))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
@@ -1067,7 +1068,7 @@ class Bot_Omb(threading.Thread):
                                 self.__bank = Bank(self.__channel_name, self.__channel, self.__whisper)
                                 self.__chat_channel[self.__channel_name]["bank"] = self.__bank
                             if setting_name == "watchtime_mode" and not data.string_to_bool(data.get_element('watchtime_mode', self.__settings)[eSetting.state]):
-                                self.__chat_channel[self.__channel_name]["watchtime"] = Watchtime(self.__api, self.__channel_name)
+                                self.__chat_channel[self.__channel_name]["watchtime"] = Watchtime(self.__api, self.__channel_name, self.__users)
                             data.update(setting_name, [None, True], self.__settings)
                         elif setting_state == "off":
                             if setting_name == "greetings" and self.__greetings is not None:

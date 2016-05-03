@@ -32,21 +32,21 @@ import data
 
 class Watchtime(threading.Thread):
 
-    def __init__(self, api, name):
+    def __init__(self, api, name, users):
         threading.Thread.__init__(self)
-        self.__users = data.load(config.PATH+"channel/"+name+"/users.csv")
+        self.__users = users
         self.__channel_name = name
         self.__api = api
         self.__active = True
         self.start()
-
+        
     def run(self):
         while self.__active:
             time.sleep(60)
             if self.__api.getOnlineState(self.__channel_name):
                 self.__users = data.load(config.PATH+"channel/"+self.__channel_name+"/users.csv")
                 if self.__active:
-                    users_chat = self.__api.getUsers(self.__channel_name)
+                    users_chat = self.__api.getChatters(self.__channel_name)
                     if users_chat is not None:
                         for i in range(len(users_chat)):
                             user = data.get_element(users_chat[i].lower(), self.__users)
@@ -54,10 +54,10 @@ class Watchtime(threading.Thread):
                                 watched = int(user[eUser.watchtime]) + 1
                                 if not data.update(users_chat[i].lower(), [None, None, None, None, None, None, None, watched], self.__users):
                                     self.__users.append([users_chat[i].lower(), 0, 100, False, 0, 0, 0, watched])
+                            else:
+                                watched = 1
+                                self.__users.append([users_chat[i].lower(), 0, 100, False, 0, 0, 0, watched])
                         data.save(config.PATH+"channel/"+self.__channel_name+"/users.csv", self.__users)
-
-    def __watchtime_me(self):
-        pass
 
     def finish(self):
         self.__active = False
