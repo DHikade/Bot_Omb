@@ -67,7 +67,7 @@ class Bot_Omb(threading.Thread):
                 announcement_thread = Announcement(key[eAnnouncement.ident], key[eAnnouncement.message], self.__channel, int(key[eAnnouncement.hour]), int(key[eAnnouncement.minute]), int(key[eAnnouncement.second]))
                 announcement_thread.setName(key[eAnnouncement.ident])
                 announcements.append(announcement_thread)
-            self.__chat_channel[chat_channel[i]] = {"users" : data.load(config.PATH+"channel/"+chat_channel[i]+"/users.csv"), "commands" : data.load(config.PATH+"channel/"+chat_channel[i]+"/commands.csv"), "settings" : data.load(config.PATH+"channel/"+chat_channel[i]+"/settings.csv"), "ranks" : data.load(config.PATH+"channel/"+chat_channel[i]+"/ranks.csv"), "whitelist" : data.load(config.PATH+"channel/"+chat_channel[i]+"/whitelist.csv"),"bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None, "bank" : None, "watchtime" : None, "api" : api(chat_channel)}
+            self.__chat_channel[chat_channel[i]] = {"users" : data.load(config.PATH+"channel/"+chat_channel[i]+"/users.csv"), "commands" : data.load(config.PATH+"channel/"+chat_channel[i]+"/commands.csv"), "settings" : data.load(config.PATH+"channel/"+chat_channel[i]+"/settings.csv"), "ranks" : data.load(config.PATH+"channel/"+chat_channel[i]+"/ranks.csv"), "whitelist" : data.load(config.PATH+"channel/"+chat_channel[i]+"/whitelist.csv"), "quotes" : data.load("channel/"+chat_channel[i]+"/quotes.csv"), "bets" : None, "announcements" : announcements, "announcelist" : announce, "smm_submits" : smm_submits, "poll" : None, "greetings" : None, "language" : None, "bank" : None, "watchtime" : None, "api" : api(chat_channel)}
             self.__chat_channel[chat_channel[i]]["language"] = Language(data.get_element('language_chat', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state])
             self.__chat_channel[chat_channel[i]]["api"].start()
             if data.string_to_bool(data.get_element('bank_mode', self.__chat_channel[chat_channel[i]]["settings"])[eSetting.state]):
@@ -106,6 +106,7 @@ class Bot_Omb(threading.Thread):
                     self.__ranks = self.__chat_channel[self.__channel_name]['ranks']
                     self.__bank = self.__chat_channel[self.__channel_name]['bank']
                     self.__whitelist = self.__chat_channel[self.__channel_name]['whitelist']
+                    self.__quotes = self.__chat_channel[self.__channel_name]['quotes']
                     self.__languages = {"obj" : self.__chat_channel[self.__channel_name]['language'], "lan" : self.__chat_channel[self.__channel_name]['language'].get_Languages()}
                     self.__api = self.__chat_channel[self.__channel_name]["api"]
                     self.__bank.set_Language(self.__languages)
@@ -200,6 +201,11 @@ class Bot_Omb(threading.Thread):
                     if data.string_to_bool(data.get_element('watchtime_mode', self.__settings)[eSetting.state]):
                         self.__watchtime_me(username, message, int(data.get_element('watchtime_me', self.__settings)[eSetting.state]))
 
+                    if data.string_to_bool(data.get_element('quote_mode', self.__settings)[eSetting.state]):
+                        self.__quote_add(username, message, int(data.get_element('quote_add', self.__settings)[eSetting.state]))
+                        self.__quote_remove(username, message, int(data.get_element('quote_remove', self.__settings)[eSetting.state]))
+                        self.__quote_show(username, message, int(data.get_element('quote_show', self.__settings)[eSetting.state]))
+                    
                     time.sleep(config.RATE)
         print("Thread: {0} shutdown".format(self.__channel_name))
         
@@ -227,6 +233,61 @@ class Bot_Omb(threading.Thread):
                         self.__channel.chat(self.__languages["lan"]["language_later"])
                 else:
                     self.__channel.chat(self.__languages["lan"]["language_switch_fail"].format(language))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+    
+    def __quote_add(self, username, message, privileges):
+        if regex.REG_QUOTE_ADD.match(message):
+            user = data.get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                message = message[message.find(' ')+1:len(message)]
+                message = message[message.find(' ')+1:len(message)]
+                quote_user = message[0:message.find(' ')]
+                message = message[message.find(' ') : len(message)]
+                quote_message = message[message.find(' ')+1:len(message)]                
+                self.__quotes.append([str(len(self.__quotes)), quote_user, quote_message, str(time.strftime("%d.%m.%Y %H:%M:%S"))])
+                data.save("quotes.csv", self.__quotes)
+                self.__chat_channel[self.__channel_name]['quotes'] = self.__quotes
+                self.__channel.chat(self.__languages["lan"]["quote_add"].format(quote_message, quote_user))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __quote_remove(self, username, message, privileges):
+        if regex.REG_QUOTE_REMOVE.match(message):
+            user = data.get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                quote_id = int(message[message.rfind(' ')+1 : len(message)])
+                if quote_id < 0 or quote_id >= len(self.__quotes):
+                    self.__channel.chat(self.__languages["lan"]["quote_remove_fail"].format(str(quote_id)))
+                else:
+                    del self.__quotes[quote_id]
+                    data.save("quotes.csv", self.__quotes)
+                    self.__chat_channel[self.__channel_name]['quotes'] = self.__quotes
+                    self.__channel.chat(self.__languages["lan"]["quote_remove_success"].format(str(quote_id)))
+            else:
+                self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
+
+    def __quote_show(self, username, message, privileges):
+        if message == "!quotes":
+            user = data.get_element(username, self.__users)
+            if user is not None:
+                user_privileges = int(user[eUser.privileges])
+            else:
+                user_privileges = 0
+            if user_privileges >= privileges:
+                if len(self.__quotes) > 0:
+                    quote_choice = random.choice(self.__quotes)
+                    self.__channel.chat(self.__languages["lan"]["quote_choice"].format(str(quote_choice[0]), str(quote_choice[2]), str(quote_choice[1]), str(quote_choice[3])))
+                else:
+                    self.__channel.chat(self.__languages["lan"]["quote_choice_fail"])
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
