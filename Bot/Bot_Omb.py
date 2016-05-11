@@ -338,7 +338,7 @@ class Bot_Omb(threading.Thread):
                     self.__channel.chat(self.__languages["lan"]["watchtime_zero"])
                 else:
                     user_watchtime_output = data.toTime(user_watchtime)
-                    self.__channel.chat(self.__languages["lan"]["watchtime"].format(user_watchtime_output[0], user_watchtime_output[1], user_watchtime_output[2]))
+                    self.__channel.chat(self.__languages["lan"]["watchtime"].format(username, user_watchtime_output[0], user_watchtime_output[1], user_watchtime_output[2]))
             else:
                 self.__whisper.whisper(username, self.__languages["lan"]["privileges_check_fail"].format(privileges))
 
