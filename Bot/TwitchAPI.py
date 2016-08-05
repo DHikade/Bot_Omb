@@ -25,10 +25,11 @@
 '''
 
 try:
-    from urllib.request import urlopen
+    from urllib.request import Request, urlopen
 except ImportError:
-    from urllib2 import urlopen
+    from urllib2 import Request, urlopen
 import json
+import config
 
 import threading
 import time
@@ -51,7 +52,9 @@ class TwitchAPI():
 
     def getJSON(self, param):
         try:
-            response = urlopen(param)
+            request = Request(param)
+            request.add_header("Client-ID", config.CLIENT_ID)
+            response = urlopen(request)
             str_response = response.read().decode('utf-8')
             api = json.loads(str_response)
         except:
